@@ -8,7 +8,7 @@ import {BalanceUtils} from "../shared/BalanceUtils.sol";
 import {LiquidityUtils} from "../shared/LiquidityUtils.sol";
 
 import "../shared/types/Types.sol";
-
+ 
 /// @title LiquidationModule
 /// @custom:security-contact security@euler.xyz
 /// @author Euler Labs (https://www.eulerlabs.com/)

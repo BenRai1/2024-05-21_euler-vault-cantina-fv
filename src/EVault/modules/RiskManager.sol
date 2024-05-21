@@ -8,7 +8,7 @@ import {LiquidityUtils} from "../shared/LiquidityUtils.sol";
 
 import "../shared/types/Types.sol";
 
-/// @title RiskManagerModule
+/// @title RiskManagerModule 
 /// @custom:security-contact security@euler.xyz
 /// @author Euler Labs (https://www.eulerlabs.com/)
 /// @notice An EVault module handling risk management, including vault and account health checks

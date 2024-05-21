@@ -1,78 +1,42 @@
 import "./Base.spec";
 import "./GhostPow.spec";
 import "./LoadVaultSummaries.spec";
-
-/*
-    Declaration of methods that are used in the rules. envfree indicate that
-    the method is not dependent on the environment (msg.value, msg.sender).
-    Methods that are not declared here are assumed to be dependent on env.
-*/
-methods {
-    function name() external returns string envfree;
-    function symbol() external returns string envfree;
-    function decimals() external returns uint8 envfree;
-    function asset() external returns address envfree;
-    function approve(address,uint256) external returns bool;
-    function deposit(uint256,address) external;
-    function mint(uint256,address) external;
-    function withdraw(uint256,address,address) external;
-    function redeem(uint256,address,address) external;
-    function permit(address,address,uint256,uint256,uint8,bytes32,bytes32) external;
-    function DOMAIN_SEPARATOR() external returns bytes32;
-
-    /// Summaries
-    // summary for rpow
-    function RPow.rpow(uint256 x, uint256 y, uint256 base) internal returns (uint256, bool) => CVLPow(x, y, base);
-
-    // See comment near CVLgetCurrentOnBehalfOfAccount definition in LoadVaultSummaries spec.
-    function _.getCurrentOnBehalfOfAccount(address controller) external => CVLgetCurrentOnBehalfOfAccount(controller) expect (address, bool);
-
-    function storage_lastInterestAccumulatorUpdate() external returns (uint48) envfree;
-    function storage_cash() external returns (VaultHarness.Assets) envfree;
-    function storage_supplyCap() external returns (uint256) envfree;
-    function storage_borrowCap() external returns (uint256) envfree;
-    function storage_hookedOps() external returns (VaultHarness.Flags) envfree;
-    function storage_snapshotInitialized() external returns (bool) envfree;
-    function storage_totalShares() external returns (VaultHarness.Shares) envfree;
-    function storage_totalBorrows() external returns (VaultHarness.Owed) envfree;
-    function storage_accumulatedFees() external returns (VaultHarness.Shares) envfree;
-    function storage_interestAccumulator() external returns (uint256) envfree;
-    function storage_configFlags() external returns (VaultHarness.Flags) envfree;
-
-}
+import"./Base/vault.spec";
 
 // used to test running time
 use builtin rule sanity;
-use rule privilegedOperation;
-
-// This is not in the scene for this config, so we just want it to be
-// an uninterpreted function rather than NONDET so that
-// we get the same value when this is called for different parts
-ghost CVLgetCurrentOnBehalfOfAccountAddr(address) returns address;
-ghost CVLgetCurrentOnBehalfOfAccountBool(address) returns bool;
-
-function CVLgetCurrentOnBehalfOfAccount(address addr) returns (address, bool) {
-    return (CVLgetCurrentOnBehalfOfAccountAddr(addr),
-        CVLgetCurrentOnBehalfOfAccountBool(addr));
-}
-
-// Assumptions for LTVConfig
-function LTVConfigAssumptions(env e, VaultHarness.LTVConfig ltvConfig) returns bool {
-    bool LTVLessOne = ltvConfig.liquidationLTV < 10000;
-    bool initialLTVLessOne = ltvConfig.initialLiquidationLTV < 10000;
-    bool target_less_original = ltvConfig.liquidationLTV < ltvConfig.initialLiquidationLTV;
-    mathint timeRemaining = ltvConfig.targetTimestamp - e.block.timestamp;
-    return LTVLessOne &&
-        initialLTVLessOne &&
-        target_less_original && 
-        require_uint32(timeRemaining) < ltvConfig.rampDuration;
-}
-
+use rule privilegedOperation; //@audit-issue what is this? Check it since it fails for every file
 
 
 ////////////////////////////////////////////////////////////////////////////////
 ////           #  asset To shares mathematical properties                  /////
 ////////////////////////////////////////////////////////////////////////////////
+
+
+//------------------------------- RULES TEST START ----------------------------------
+
+//------------------------------- RULES TEST END ----------------------------------
+
+//------------------------------- RULES PROBLEMS START ----------------------------------
+
+//------------------------------- RULES PROBLEMS START ----------------------------------
+
+//------------------------------- RULES OK START ------------------------------------
+
+//------------------------------- RULES OK END ------------------------------------
+
+//------------------------------- INVARIENTS OK START-------------------------------
+
+//------------------------------- INVARIENTS OK END-------------------------------
+
+//------------------------------- ISSUES OK START-------------------------------
+
+//------------------------------- ISSUES OK END-------------------------------
+
+//------------------------------- OLD RULES START-------------------------------
+
+
+
 
 rule conversionOfZero {
     env e;

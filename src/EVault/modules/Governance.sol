@@ -10,7 +10,7 @@ import {BalanceUtils} from "../shared/BalanceUtils.sol";
 import {LTVUtils} from "../shared/LTVUtils.sol";
 import {BorrowUtils} from "../shared/BorrowUtils.sol";
 import {ProxyUtils} from "../shared/lib/ProxyUtils.sol";
-
+ 
 import "../shared/types/Types.sol";
 
 /// @title GovernanceModule
@@ -143,11 +143,7 @@ abstract contract GovernanceModule is IGovernance, BalanceUtils, BorrowUtils, LT
     }
 
     /// @inheritdoc IGovernance
-    function LTVFull(address collateral)
-        public
-        view
-        virtual
-        reentrantOK
+    function LTVFull(address collateral) public view virtual reentrantOK
         returns (uint16, uint16, uint16, uint48, uint32)
     {
         LTVConfig memory ltv = vaultStorage.ltvLookup[collateral];
@@ -244,13 +240,13 @@ abstract contract GovernanceModule is IGovernance, BalanceUtils, BorrowUtils, LT
 
     /// @inheritdoc IGovernance
     function setGovernorAdmin(address newGovernorAdmin) public virtual nonReentrant governorOnly {
-        vaultStorage.governorAdmin = newGovernorAdmin;
+        vaultStorage.governorAdmin = newGovernorAdmin; //i: no need for 2 step owner change becasues owner should be able to be set to address(0) 
         emit GovSetGovernorAdmin(newGovernorAdmin);
     }
 
     /// @inheritdoc IGovernance
     function setFeeReceiver(address newFeeReceiver) public virtual nonReentrant governorOnly {
-        vaultStorage.feeReceiver = newFeeReceiver;
+        vaultStorage.feeReceiver = newFeeReceiver; //@audit-issue no check for zero address => what happens if the address is zero?
         emit GovSetFeeReceiver(newFeeReceiver);
     }
 
@@ -314,13 +310,14 @@ abstract contract GovernanceModule is IGovernance, BalanceUtils, BorrowUtils, LT
 
     /// @inheritdoc IGovernance
     function setMaxLiquidationDiscount(uint16 newDiscount) public virtual nonReentrant governorOnly {
-        vaultStorage.maxLiquidationDiscount = newDiscount.toConfigAmount();
+        vaultStorage.maxLiquidationDiscount = newDiscount.toConfigAmount(); //@audit-issue no check if the discount is within the allowed range
         emit GovSetMaxLiquidationDiscount(newDiscount);
     }
 
     /// @inheritdoc IGovernance
     function setLiquidationCoolOffTime(uint16 newCoolOffTime) public virtual nonReentrant governorOnly {
         vaultStorage.liquidationCoolOffTime = newCoolOffTime;
+        //@audit-issue why is there no check if the cool off time is within the allowed range?
         emit GovSetLiquidationCoolOffTime(newCoolOffTime);
     }
 
