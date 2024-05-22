@@ -20,7 +20,7 @@ contract Cache is Storage, Errors {
     // Returns an updated VaultCache
     // If different from VaultStorage, updates VaultStorage
     function updateVault() internal virtual returns (VaultCache memory vaultCache) {
-        if (initVaultCache(vaultCache)) {
+        if (initVaultCache(vaultCache)) { //i: get all the infos from the storage and if time has passed, the values for totalBorrows, interestAccoumulator, lastInterestAccumulatorUpdate, accumulatedFees and totalShares were updated and need to be coppied from the cache to the actural storage => all data is up to date 
             vaultStorage.lastInterestAccumulatorUpdate = vaultCache.lastInterestAccumulatorUpdate;
             vaultStorage.accumulatedFees = vaultCache.accumulatedFees;
 

@@ -2,6 +2,23 @@
 
 /////////////////// METHODS START ///////////////////////
 methods {
+//Harness functions
+function reentrancyLockedHarness() external returns (bool) envfree;
+function getCFG_MAX_VALUEHarness() external returns (uint32) envfree;
+function getOP_MAX_VALUEHarness() external returns (uint32) envfree;
+function toConfigAmountHarness(uint16 value) external returns (GovernanceHarness.ConfigAmount) envfree;
+function getCurrentLTVConfigHarness(address collateral) external returns (GovernanceHarness.LTVConfig) envfree;
+function getMAX_SANE_AMOUNTHarness() external returns (uint256) envfree;
+function wrapAmountCapHarness(uint16 value) external returns (GovernanceHarness.AmountCap) envfree;
+function resolveAmountCapHarness(GovernanceHarness.AmountCap self) external returns (uint256) envfree;
+function wrapFlagsHarness(uint32 value) external returns (GovernanceHarness.Flags) envfree;
+function isHookTarget() external returns (bytes4) envfree;
+function isValidInterestFeeHarness(uint16 interestFee) external returns (bool) envfree;
+function getGUARANTEED_INTEREST_FEE_MINHarness() external returns (uint16) envfree;
+function getGUARANTEED_INTEREST_FEE_MAXHarness() external returns (uint16) envfree;
+function getInterestRateHarness() external returns (uint72) envfree;
+
+//Governance functions
 function governorAdmin() external returns (address) envfree;
 function feeReceiver() external returns (address) envfree;
 function interestFee() external returns (uint16) envfree;
@@ -20,9 +37,7 @@ function unitOfAccount() external returns (address) envfree;
 function oracle() external returns (address) envfree;
 function permit2Address() external returns (address) envfree;
 function LTVFull(address collateral) external returns (uint16, uint16, uint16, uint48, uint32) envfree;
-function getCFG_MAX_VALUEHarness() external returns (uint32) envfree;
-function getOP_MAX_VALUEHarness() external returns (uint32) envfree;
-function toConfigAmountHarness(uint16 value) external returns (GovernanceHarness.ConfigAmount) envfree;
+function _.isHookTarget() external => NONDET;
 
 
 
@@ -45,6 +60,31 @@ f.selector == sig:setInterestRateModel(address).selector ||
 f.selector == sig:setLiquidationCoolOffTime(uint16).selector ||
 f.selector == sig:setLTV(address,uint16,uint16,uint32).selector ||
 f.selector == sig:setMaxLiquidationDiscount(uint16).selector;
+
+
+definition HARNESS_FUNCTIONS(method f) returns bool =
+f.selector == sig:getOnBehalfOfAccountHarness().selector ||
+f.selector == sig:getCFG_MAX_VALUEHarness().selector ||
+f.selector == sig:getOP_MAX_VALUEHarness().selector ||
+f.selector == sig:getMAX_SANE_AMOUNTHarness().selector ||
+f.selector == sig:toConfigAmountHarness(uint16 ).selector ||
+f.selector == sig:getLTVHarness(GovernanceHarness.LTVConfig memory, bool).selector ||
+f.selector == sig:getCurrentLTVConfigHarness(address ).selector ||
+f.selector == sig:wrapAmountCapHarness(uint16 ).selector ||
+f.selector == sig:resolveAmountCapHarness(GovernanceHarness.AmountCap).selector ||
+f.selector == sig:wrapFlagsHarness(uint32).selector ||
+f.selector == sig:reentrancyLockedHarness().selector;
+
+definition DISABLED_FUNCTIONS(method f) returns bool =
+f.selector == sig:isDepositDisabled().selector ||
+f.selector == sig:isMintDisabled().selector ||
+f.selector == sig:isOperationDisabledExt(uint32).selector ||
+f.selector == sig:isRedeemDisabled().selector ||
+f.selector == sig:isSkimDisabled().selector ||
+f.selector == sig:isWithdrawDisabled().selector;
+
+
+
 
 
 

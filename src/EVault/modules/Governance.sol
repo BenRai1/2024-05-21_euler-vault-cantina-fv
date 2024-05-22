@@ -213,7 +213,7 @@ abstract contract GovernanceModule is IGovernance, BalanceUtils, BorrowUtils, LT
         address governorReceiver = vaultStorage.feeReceiver;
 
         if (governorReceiver == address(0)) {
-            protocolFee = CONFIG_SCALE; // governor forfeits fees
+            protocolFee = CONFIG_SCALE; // governor forfeits fees CONFIG_SCALE = 1e4 = 100%
         } else if (protocolFee > MAX_PROTOCOL_FEE_SHARE) {
             protocolFee = MAX_PROTOCOL_FEE_SHARE;
         }
@@ -277,7 +277,9 @@ abstract contract GovernanceModule is IGovernance, BalanceUtils, BorrowUtils, LT
 
         LTVConfig memory currentLTV = vaultStorage.ltvLookup[collateral];
 
-        // If new LTV is higher or equal to current, as per ramping configuration, it should take effect immediately
+        // If new LTV is higher or equal to current, as per ramping configuration, it should take effect immediately 
+        
+        //@audit-issue one wants to set the final liquidation LTV hight that it currently is (but with a ramp becasue rampDuration > 0) => should be set right away but the function reverts => should set the rampDuration to 0 and the rampDuration to 0.
         if (newLiquidationLTV >= currentLTV.getLTV(true) && rampDuration > 0) revert E_LTVLiquidation();
 
         LTVConfig memory newLTV = currentLTV.setLTV(newBorrowLTV, newLiquidationLTV, rampDuration);
@@ -310,7 +312,7 @@ abstract contract GovernanceModule is IGovernance, BalanceUtils, BorrowUtils, LT
 
     /// @inheritdoc IGovernance
     function setMaxLiquidationDiscount(uint16 newDiscount) public virtual nonReentrant governorOnly {
-        vaultStorage.maxLiquidationDiscount = newDiscount.toConfigAmount(); //@audit-issue no check if the discount is within the allowed range
+        vaultStorage.maxLiquidationDiscount = newDiscount.toConfigAmount(); //i: check if the discount is within the allowed range is done in the toConfigAmount
         emit GovSetMaxLiquidationDiscount(newDiscount);
     }
 
@@ -366,6 +368,7 @@ abstract contract GovernanceModule is IGovernance, BalanceUtils, BorrowUtils, LT
 
         AmountCap _borrowCap = AmountCap.wrap(borrowCap);
         if (borrowCap != 0 && _borrowCap.resolve() > MAX_SANE_AMOUNT) revert E_BadBorrowCap();
+        //@audit-check can the borrow cap be set higher than the supply cap and if so can this be a problem?
 
         vaultStorage.supplyCap = _supplyCap;
         vaultStorage.borrowCap = _borrowCap;
@@ -381,7 +384,8 @@ abstract contract GovernanceModule is IGovernance, BalanceUtils, BorrowUtils, LT
 
         // Interest fees in guaranteed range are always allowed, otherwise ask protocolConfig
         if (newInterestFee < GUARANTEED_INTEREST_FEE_MIN || newInterestFee > GUARANTEED_INTEREST_FEE_MAX) {
-            if (!protocolConfig.isValidInterestFee(address(this), newInterestFee)) revert E_BadFee();
+            if (!protocolConfig.isValidInterestFee(address(this), newInterestFee)) revert E_BadFee(); //@audit-issue it is possible to set a fee that is smaller than the minInteresFee saved in the _interestFeeRanges for the vault becasue this is only checked if the fee is below the GUARANTEED_INTEREST_FEE_MIN. GUARANTEED_INTEREST_FEE_MIN = 0.1e4, minInterestFee for vault is set to 0.2e4 => fee of 0,1e4 can be set
+            //@audit-issue it is possible to set a fee that is higher than 1e4(100%) Why should this be possible?
         }
 
         vaultStorage.interestFee = newInterestFee.toConfigAmount();

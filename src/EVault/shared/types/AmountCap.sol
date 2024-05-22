@@ -13,7 +13,8 @@ import {AmountCap} from "./Types.sol";
 /// * The most significant 10 bits are the mantissa, scaled by 100
 /// * The special value of 0 means limit is not set
 ///   * This is so that uninitialized storage implies no limit
-///   * For an actual cap value of 0, use a zero mantissa and non-zero exponent
+///   * For an actual cap value of 0, use a zero mantissa and non-zero exponent 
+//@audit-check check this closer
 library AmountCapLib {
     function resolve(AmountCap self) internal pure returns (uint256) {
         uint256 amountCap = AmountCap.unwrap(self);

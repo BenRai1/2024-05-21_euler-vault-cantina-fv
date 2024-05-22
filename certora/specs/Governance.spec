@@ -1,60 +1,74 @@
 import "./Base.spec";
 import "./Base/governance.spec";
-
-
+using MockHookTarget as HookTarget;
 
 // used to test running time
 use builtin rule sanity;
 use rule privilegedOperation;
 
+//invariants:
+//- interstRate should never be bigger than MAX_ALLOWED_INTEREST_RATE
+//- lastInterestAccumulatorUpdate should never be bigger than the current block timestamp
+
 //------------------------------- RULES TEST START ----------------------------------
 
 
 
-    //setCaps works
-    rule setCapsIntegraty(env e) {
-        uint16 cap1;
-        uint16 cap2;
-        
-        //function call
-        setCaps(e, cap1, cap2);
-        
-        //caps values after
-        uint16 cap1After;
-        uint16 cap2After;
-        (cap1After, cap2After) = caps();
-
-        assert(cap1After == cap1 && cap2After == cap2, "Caps values were not set correctly");
-    }
-
-    //setInterestFee works //@audit-issue Vault must be updated first, must be in the range
-    rule setInterestFeeIntegraty(env e) {
-        uint16 interestFee;
-
-        //function call
-        setInterestFee(e, interestFee);
-
-        //interestFee value after
-        uint16 interestFeeAfter = interestFee();
-
-        assert(interestFeeAfter == interestFee, "Interest fee was not set correctly");
-    }
-
-    //setInterestRateModel works //@audit-issue Vault must be updated first, must be in the range
+    //setInterestRateModel works //@audit Vault must be updated first, must be in the range
     rule setInterestRateModelIntegraty(env e) {
-        address interestRateModel;
+        address newInterestRateModel;
+        GovernanceHarness.VaultCache targetVaultCache = getVaultCacheHarness(e); ////@audit assume this works
+        //check if targetVaultCache workes
+        // if so, use it to get the targetInterestRate
+        uint256 targetInterestRate = getTargetInterestRateHarness(e,newInterestRateModel, targetVaultCache);
 
         //function call
-        setInterestRateModel(e, interestRateModel);
+        setInterestRateModel(e, newInterestRateModel);
 
-        //interestRateModel value after
+        //values after
         address interestRateModelAfter = interestRateModel();
+        uint72 interestRateAfter = getInterestRateHarness();
 
-        assert(interestRateModelAfter == interestRateModel, "Interest rate model was not set correctly");
+        //--------------------------------- ASSERTS OK START ------------------------------
+            // //interest rate model is set correctly
+            // assert(interestRateModelAfter == newInterestRateModel, "Interest rate model was not set correctly");
+
+            // //if newInterestRateModel is address(0), the interes rate should stay the same
+            // assert(newInterestRateModel == 0 => interestRateAfter == 0, "Interest rate should be 0");
+
+        ///------------------------------- ASSERTS OK END ------------------------------
+
+        //interest rate is updated
+        assert(interestRateAfter == assert_uint72(targetInterestRate), "Interest rate was not updated correctly");
+
+        //check if the 
+
+
+
+        //@audit issues would be in contracts without mutations:
+        //get all values from the cache before and after
+        //if time hast not passed, then values after need to be the same as before
     }
 
 
-    //setLTV works //@audit-issue check if the address is "itslef"
+
+
+
+   
+
+
+
+//------------------------------- TESTING ----------------------------------
+
+
+//------------------------------- RULES TEST END ----------------------------------
+
+//------------------------------- RULES PROBLEMS START ----------------------------------
+
+
+
+
+        //setLTV works //@audit reverts work, checking the final values does not work
     rule setLTVIntegraty(env e) {
         address collateral;
         uint16 borrowLTV;
@@ -62,6 +76,16 @@ use rule privilegedOperation;
         uint16 liquidationLTV;
         GovernanceHarness.ConfigAmount newLiquidationLTV = toConfigAmountHarness(liquidationLTV);
         uint32 rampDuration;
+        GovernanceHarness.LTVConfig currentLtvConfigBefore = getCurrentLTVConfigHarness(collateral); 
+        GovernanceHarness.ConfigAmount calculatedTvl = getLTVHarness(e, currentLtvConfigBefore, true);
+        bool isInitialized = currentLtvConfigBefore.initialized;
+        uint256 nuberOfLTVsBefore = LTVList().length;
+        require(nuberOfLTVsBefore < max_uint256);
+        require(e.block.timestamp + rampDuration < max_uint48);
+        bool lockedBefore = reentrancyLockedHarness();
+        address onBehalfeOf = getOnBehalfOfAccountHarness(e);
+
+
 
         //LTV values before
         uint16 borrowLTVBefore;
@@ -83,27 +107,121 @@ use rule privilegedOperation;
         uint48 targetTimestampAfter;
         uint32 rampDurationAfter;
         (borrowLTVAfter, liquidationLTVAfter, initialLiquidationLTVAfter, targetTimestampAfter, rampDurationAfter) = LTVFull(collateral);
+        uint256 nuberOfLTVsAfter = LTVList().length;
+        GovernanceHarness.LTVConfig currentLtvConfigAfter = getCurrentLTVConfigHarness(collateral); 
 
-        // assert(borrowLTVAfter == borrowLTV && liquidationLTVAfter == liquidationLTV && rampDurationAfter == rampDuration, "LTV values were not set correctly");
+        ///------------------------------- ASSERTS OK START----------------------
+            // //collataral should not be the current contract
+            // assert(collateral == currentContract => reverted, "Collateral is the current contract");
 
+            // //borrowLTV should not be bigger than the liquidationLTV
+            // assert(newBorrowLTV > newLiquidationLTV => reverted, "Borrow LTV is bigger than liquidation LTV");
 
-        //------------------------------- ASSERTS OK ----------------------
+            // //if the new LTV values is higher than the current LTV values and the rampDuration is bigger than 0, revert
+            // assert(newLiquidationLTV >= calculatedTvl && rampDuration > 0 => reverted, "Function should revert");
 
-        // //collataral should not be the current contract
-        // assert(collateral == currentContract => reverted, "Collateral is the current contract");
+            // //if the collateral was not initalized, ltvList is 1 longer
+            // assert(!reverted && !isInitialized => nuberOfLTVsAfter ==  assert_uint256(nuberOfLTVsBefore +1), "Uninitalized LTV is not added to the ltvList");
+            // assert(!reverted && isInitialized => nuberOfLTVsAfter == nuberOfLTVsBefore, "Initalized LTV was added to the ltvList");
 
-        // //borrowLTV should not be bigger than the liquidationLTV
-        // assert(newBorrowLTV > newLiquidationLTV => reverted, "Borrow LTV is bigger than liquidation LTV");
+            // //should not revert if non of the revert issue are met + msg.value == 0
+            // assert(
+            // !(collateral == currentContract) && 
+            // !(newBorrowLTV > newLiquidationLTV) && 
+            // !(newLiquidationLTV >= calculatedTvl && rampDuration > 0) 
+            // && e.msg.value == 0 &&
+            // lockedBefore == false &&
+            // onBehalfeOf == governorAdmin()
+            // => !reverted, "Function should not revert");
 
+        ///------------------------------- ASSERTS OK END----------------------
+        
+
+        //if the function does not revert, the LTV values are set correctly
+         assert(!reverted => 
+         borrowLTVAfter == borrowLTV && 
+         liquidationLTVAfter == liquidationLTV && 
+         initialLiquidationLTVAfter == calculatedTvl &&
+         targetTimestampAfter == assert_uint48(e.block.timestamp + rampDuration) &&
+         rampDurationAfter == rampDuration &&
+         currentLtvConfigAfter.initialized == true,
+         "LTV values were not set correctly");
 
     }
 
 
 
- //------------------------------- TESTING ----------------------------------
+//------------------------------- RULES PROBLEMS START ----------------------------------
+
+//------------------------------- RULES OK START ------------------------------------
+
+
+
+
+    //setInterestFee works 
+    rule setInterestFeeIntegraty(env e) {
+        uint16 newInterestFee;
+        bool checkValidity = newInterestFee < getGUARANTEED_INTEREST_FEE_MINHarness() || newInterestFee > getGUARANTEED_INTEREST_FEE_MAXHarness();
+        bool validInteresFee = isValidInterestFeeHarness(newInterestFee);
+
+        //@audit issues would be in contracts without mutations:
+        //get all values from the cache before and after
+        //if time hast not passed, then values after need to be the same as before
+
+        //function call
+        setInterestFee@withrevert(e, newInterestFee);
+        bool reverted = lastReverted;
+
+        //interestFee value after
+        uint16 interestFeeAfter = interestFee();
+
+        assert(!reverted => interestFeeAfter == newInterestFee, "Interest fee was not set correctly");
+        assert(!validInteresFee && checkValidity => reverted, "Interest fee is not valid");
+    }
+
+    //setHookConfig works 
+    rule setHookConfigIntegraty(env e) {
+        address newHookTarget;
+        uint32 hookedOps;
+        GovernanceHarness.Flags wrapedHookedOps = wrapFlagsHarness(hookedOps);
+        require(HookTarget == newHookTarget);
+        bytes4 targetSelector = isHookTarget();
+        bytes4 selector = HookTarget.isHookTarget(e);
+        address onBehalfOf = getOnBehalfOfAccountHarness(e);
+        bool lockedBefore = reentrancyLockedHarness();
+
+
+        //function call
+        setHookConfig@withrevert(e, newHookTarget, hookedOps);
+        bool reverted = lastReverted;
+
+        //hookConfig values after
+        address hookTargetAfter;
+        uint32 hookedOpsAfter;
+        (hookTargetAfter, hookedOpsAfter) = hookConfig();
+
+
+
+        //if newHookTarget != address(0) and the selector is not the correct one, revert
+        assert(newHookTarget != 0 && selector != targetSelector => reverted, "The selector is not the right one");
+
+        //when function passes, the data is set correctly
+        assert(!reverted => hookTargetAfter == newHookTarget && hookedOpsAfter == wrapedHookedOps, "Hook config values were not set correctly");
+        //if the hookedOps is bigger or equal to OP_MAX_VALUE, revert
+        assert(hookedOps >= getOP_MAX_VALUEHarness() => reverted, "Hooked ops value is too high");
+
+        // //should not revert if non of the revert issue are met //@audit maybe implement this later
+        // assert(!(newHookTarget != 0 && selector != targetSelector ) && 
+        // !(hookedOps >= getOP_MAX_VALUEHarness()) &&
+        // onBehalfOf == governorAdmin() &&
+        // e.msg.value == 0 &&
+        // lockedBefore == false
+        //  => !reverted, "Function should not revert");
+
+    }
 
     // Spesific state variables can only be changed by the governor
-    rule onlyGovernorCanChangeStateVariables(env e, method f, calldataarg args) filtered{f -> !f.isView && !f.isPure}{
+    rule onlyGovernorCanChangeStateVariables(env e, method f, calldataarg args) filtered{f -> !f.isView && !f.isPure && !HARNESS_FUNCTIONS(f) && !DISABLED_FUNCTIONS(f) && f.selector != sig:convertFees().selector}{
         address onBehalfeOf = getOnBehalfOfAccountHarness(e); 
         address governorAdmin = governorAdmin();
 
@@ -174,37 +292,34 @@ use rule privilegedOperation;
 
     }
 
+    //setCaps works
+    rule setCapsIntegraty(env e) {
+        uint16 supplyCap;
+        uint16 borrowCap;
+        GovernanceHarness.AmountCap _supplyCap = wrapAmountCapHarness(supplyCap);
+        uint256 resolvedSupplyCap = resolveAmountCapHarness(_supplyCap);
+        GovernanceHarness.AmountCap _borrowCap = wrapAmountCapHarness(borrowCap);
+        uint256 resolvedBorrowCap = resolveAmountCapHarness(_borrowCap);
 
-
-    //setHookConfig works
-    rule setHookConfigIntegraty(env e) {
-        address hookTarget;
-        uint32 hookedOps;
-
+        
         //function call
-        setHookConfig@withrevert(e, hookTarget, hookedOps);
+        setCaps@withrevert(e, supplyCap, borrowCap);
         bool reverted = lastReverted;
+        
+        //caps values after
+        uint16 supplyCapAfter;
+        uint16 borrowCapAfter;
+        (supplyCapAfter, borrowCapAfter) = caps();
 
-        //hookConfig values after
-        address hookTargetAfter;
-        uint32 hookedOpsAfter;
-        (hookTargetAfter, hookedOpsAfter) = hookConfig();
+        //if the function does not revert, the caps are set correctly
+        assert(!reverted => supplyCapAfter == _supplyCap && borrowCapAfter == _borrowCap, "Caps values were not set correctly");
 
-        assert(!lastReverted => hookTargetAfter == hookTarget && hookedOpsAfter == hookedOps, "Hook config values were not set correctly");
-        assert(hookedOps >= getOP_MAX_VALUEHarness() => reverted, "Hooked ops value is too high");
+        // if supplyCap != 0 and resolvedSupplyCap is to big, the function should revert
+        assert(supplyCap != 0 && resolvedSupplyCap > assert_uint256(2 * getMAX_SANE_AMOUNTHarness()) => reverted, "Supply cap is too high");
+
+        //if borrowCap != 0 and resolvedBorrowCap is to big, the function should revert
+        assert(borrowCap != 0 && resolvedBorrowCap > getMAX_SANE_AMOUNTHarness() => reverted, "Borrow cap is too high"); 
     }
-
-//------------------------------- RULES TEST END ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-//------------------------------- RULES OK START ------------------------------------
-
-
-
-
 
     //setLiquidationCoolOffTime works
     rule setLiquidationCoolOffTimeIntegraty(env e) {
@@ -301,6 +416,15 @@ use rule privilegedOperation;
 
         assert(!lastReverted => onBehalfeOf == governorAdmin, "Caller is not the governor admin");
 
+    }
+
+    //functions need to revert if reentrancy is locked
+    rule reentrancyLockIntegraty(env e, method f, calldataarg args) filtered{f -> GOVERNOR_ADMIN_ONLY_FUNCTIONS(f) || f.selector == sig:convertFees().selector}{
+ 
+        bool lockedBefore = reentrancyLockedHarness();
+        f@withrevert(e, args);
+
+        assert(lockedBefore => lastReverted, "Reentrancy lock did not work");
     }
 
 //------------------------------- RULES OK END ------------------------------------
