@@ -129,9 +129,9 @@ abstract contract BorrowingModule is IBorrowing, AssetTransfers, BalanceUtils, L
 
     /// @inheritdoc IBorrowing
     function pullDebt(uint256 amount, address from) public virtual nonReentrant returns (uint256) {
-        (VaultCache memory vaultCache, address account) = initOperation(OP_PULL_DEBT, CHECKACCOUNT_CALLER);
+        (VaultCache memory vaultCache, address account) = initOperation(OP_PULL_DEBT, CHECKACCOUNT_CALLER); //@audit-issue it here checked if the caller's collateral can handle the new debt without getting insolvant? If not this is an issue bacause it is not checke later
 
-        if (from == account) revert E_SelfTransfer();
+        if (from == account) revert E_SelfTransfer(); //i: if the caller is not the account where the debt should be pushed revert => I can only move debt to my own account 
 
         Assets assets = amount == type(uint256).max ? getCurrentOwed(vaultCache, from).toAssetsUp() : amount.toAssets();
 

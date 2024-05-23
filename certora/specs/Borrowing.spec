@@ -1,10 +1,29 @@
 import "./Base.spec";
+import "./Base/borrowing.spec";
 
-methods {
-    // dispatch and use MockFlashBorrow if more detailed implementation is required
-    function _.onFlashLoan(bytes) external => NONDET;
-}
+
 
 // used to test running time
 use builtin rule sanity;
 use rule privilegedOperation;
+
+
+//------------------------------- RULES TEST START ----------------------------------
+
+//------------------------------- RULES TEST END ----------------------------------
+
+//------------------------------- RULES PROBLEMS START ----------------------------------
+
+//------------------------------- RULES PROBLEMS START ----------------------------------
+
+//------------------------------- RULES OK START ------------------------------------
+
+//------------------------------- RULES OK END ------------------------------------
+
+//------------------------------- INVARIENTS OK START-------------------------------
+
+//------------------------------- INVARIENTS OK END-------------------------------
+
+//------------------------------- ISSUES OK START-------------------------------
+
+//------------------------------- ISSUES OK END-------------------------------

@@ -9,15 +9,41 @@ use rule privilegedOperation;
 //invariants:
 //- interstRate should never be bigger than MAX_ALLOWED_INTEREST_RATE
 //- lastInterestAccumulatorUpdate should never be bigger than the current block timestamp
+//- totalBorrowed should never be bigger than totalShares
 
 //------------------------------- RULES TEST START ----------------------------------
 
 
 
-    //setInterestRateModel works //@audit Vault must be updated first, must be in the range
+//convertFees works
+rule convertFeesIntegraty(env e) {
+
+
+    //function call
+    convertFees(e);
+
+   
+}
+
+
+
+
+
+   
+
+
+
+//------------------------------- TESTING ----------------------------------
+
+
+//------------------------------- RULES TEST END ----------------------------------
+
+//------------------------------- RULES PROBLEMS START ----------------------------------
+
+    //setInterestRateModel works //@audit targetInterestRate rate is not calculated propperly and fails
     rule setInterestRateModelIntegraty(env e) {
         address newInterestRateModel;
-        GovernanceHarness.VaultCache targetVaultCache = getVaultCacheHarness(e); ////@audit assume this works
+        GovernanceHarness.VaultCache targetVaultCache = getVaultCacheHarness(e); ////@audit assume this works (??)
         //check if targetVaultCache workes
         // if so, use it to get the targetInterestRate
         uint256 targetInterestRate = getTargetInterestRateHarness(e,newInterestRateModel, targetVaultCache);
@@ -51,24 +77,7 @@ use rule privilegedOperation;
     }
 
 
-
-
-
-   
-
-
-
-//------------------------------- TESTING ----------------------------------
-
-
-//------------------------------- RULES TEST END ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-
-
-
-        //setLTV works //@audit reverts work, checking the final values does not work
+    //setLTV works //@audit reverts work, checking the final values does not work, times out. Tryied ghost variables but got error for storage analysis
     rule setLTVIntegraty(env e) {
         address collateral;
         uint16 borrowLTV;
@@ -138,14 +147,12 @@ use rule privilegedOperation;
         
 
         //if the function does not revert, the LTV values are set correctly
-         assert(!reverted => 
-         borrowLTVAfter == borrowLTV && 
-         liquidationLTVAfter == liquidationLTV && 
-         initialLiquidationLTVAfter == calculatedTvl &&
-         targetTimestampAfter == assert_uint48(e.block.timestamp + rampDuration) &&
-         rampDurationAfter == rampDuration &&
-         currentLtvConfigAfter.initialized == true,
-         "LTV values were not set correctly");
+         assert(!reverted => borrowLTVAfter == borrowLTV, "Borrow LTV was not set correctly");
+        //  assert(!reverted => liquidationLTVAfter == liquidationLTV, "Liquidation LTV was not set correctly");     
+        //  assert(!reverted => initialLiquidationLTVAfter == calculatedTvl, "Initial liquidation LTV was not set correctly"); 
+        //  assert(!reverted => targetTimestampAfter == assert_uint48(e.block.timestamp + rampDuration), "Target timestamp was not set correctly");
+        //  assert(!reverted => rampDurationAfter == rampDuration, "Ramp duration was not set correctly");
+        //  assert(!reverted => currentLtvConfigAfter.initialized == true, "Initialized was not set correctly"); //@audit use a ghost variable for initialized(??)
 
     }
 

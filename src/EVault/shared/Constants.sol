@@ -60,3 +60,22 @@ uint32 constant CFG_MAX_VALUE = 1 << 2;
 // in order to perform these operations, the account doesn't need to have the vault installed as a controller
 uint32 constant CONTROLLER_NEUTRAL_OPS = OP_DEPOSIT | OP_MINT | OP_WITHDRAW | OP_REDEEM | OP_TRANSFER | OP_SKIM
     | OP_REPAY | OP_REPAY_WITH_SHARES | OP_CONVERT_FEES | OP_FLASHLOAN | OP_TOUCH | OP_VAULT_STATUS_CHECK;
+    //Bit: ....0111010110111111
+
+//     uint32 constant OP_DEPOSIT = 1 << 0;
+// uint32 constant OP_MINT = 1 << 1;
+// uint32 constant OP_WITHDRAW = 1 << 2;
+// uint32 constant OP_REDEEM = 1 << 3;
+// uint32 constant OP_TRANSFER = 1 << 4;
+// uint32 constant OP_SKIM = 1 << 5;
+// // uint32 constant OP_BORROW = 1 << 6;
+// uint32 constant OP_REPAY = 1 << 7;
+// uint32 constant OP_REPAY_WITH_SHARES = 1 << 8;
+// // uint32 constant OP_PULL_DEBT = 1 << 9;
+// uint32 constant OP_CONVERT_FEES = 1 << 10;
+// // uint32 constant OP_LIQUIDATE = 1 << 11;
+// uint32 constant OP_FLASHLOAN = 1 << 12;
+// uint32 constant OP_TOUCH = 1 << 13;
+// uint32 constant OP_VAULT_STATUS_CHECK = 1 << 14;
+// // Delimiter of possible operations
+// // uint32 constant OP_MAX_VALUE = 1 << 15;
