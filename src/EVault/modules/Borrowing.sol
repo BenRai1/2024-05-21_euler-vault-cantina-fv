@@ -156,7 +156,7 @@ abstract contract BorrowingModule is IBorrowing, AssetTransfers, BalanceUtils, L
 
         IFlashLoan(account).onFlashLoan(data);
 
-        if (asset.balanceOf(address(this)) < origBalance) revert E_FlashLoanNotRepaid();
+        if (asset.balanceOf(address(this)) < origBalance) revert E_FlashLoanNotRepaid(); //@audit why is there no interest for the flash loan?
     }
 
     /// @inheritdoc IBorrowing

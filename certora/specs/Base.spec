@@ -11,6 +11,7 @@ methods {
     function vaultIsOnlyController(address account) external returns (bool) envfree;
     function isAccountStatusCheckDeferredExt(address account) external returns (bool) envfree;
     function vaultIsController(address account) external returns (bool) envfree;
+    
 
     /// Summaries
     // General
@@ -94,7 +95,7 @@ function actualCallerCheckController(env e) returns address {
         bool unused;
         // Similar to EVCAuthenticateDeferred when checkController is true.
         onBehalf, unused = evc.getCurrentOnBehalfOfAccount(e, currentContract);
-        return onBehalf;
+        return onBehalf; //@audit this should also return unused, oder?
     } else {
         return e.msg.sender;
     }
@@ -105,3 +106,5 @@ function CVLTrySafeTransferFrom(env e, address from, address to, uint256 value) 
     bytes ret; // Ideally bytes("") if there is a way to do this
     return (ERC20a.transferFrom(e, from, to, value), ret);
 }
+
+

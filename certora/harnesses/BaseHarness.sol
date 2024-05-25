@@ -13,4 +13,6 @@ import "../../certora/harnesses/AbstractBaseHarness.sol";
 // AbstractBase.
 contract BaseHarness is Base, AbstractBaseHarness {
     constructor(Integrations memory integrations) Base(integrations) {}
+
+
 }

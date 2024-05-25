@@ -16,6 +16,11 @@
     function getGUARANTEED_INTEREST_FEE_MINHarness() external returns (uint16) envfree;
     function getGUARANTEED_INTEREST_FEE_MAXHarness() external returns (uint16) envfree;
     function getInterestRateHarness() external returns (uint72) envfree;
+    function getUserStorageDataHarness(address user) external returns (GovernanceHarness.PackedUserSlot) envfree;
+    function getGovernorReceiverHarness() external returns (address) envfree;
+    function getTotalSharesHarness() external returns (GovernanceHarness.Shares) envfree;
+    function getCurrentVaultCacheHarness() external returns (GovernanceHarness.VaultCache memory) envfree;
+    function unpackBalanceHarness(GovernanceHarness.PackedUserSlot data) external returns (GovernanceHarness.Shares) envfree;
 
     //Governance functions
     function governorAdmin() external returns (address) envfree;
@@ -36,9 +41,16 @@
     function oracle() external returns (address) envfree;
     function permit2Address() external returns (address) envfree;
     function LTVFull(address collateral) external returns (uint16, uint16, uint16, uint48, uint32) envfree;
+    function calculateProtocolFeeHarness(address governorReceiver, uint16 protocolFee) external returns (uint16) envfree;
+
+
     function _.isHookTarget() external => NONDET;
+    //Function summary
+    function _.initOperation(uint32 operation, address accountToCheck) internal with(env e) => CVLInitOperation(e, operation, accountToCheck) expect (GovernanceHarness.VaultCache, address) ALL;
 
 
+    
+    
 
 
     }
@@ -90,7 +102,11 @@
 ///////////////// DEFINITIONS END /////////////////////
 
 ////////////////// FUNCTIONS START //////////////////////
-
+    function CVLInitOperation(env e, uint32 operation, address accountToCheck) returns (GovernanceHarness.VaultCache, address) {
+        address onBehalfOf = actualCaller(e);
+        GovernanceHarness.VaultCache cache = getCurrentVaultCacheHarness();
+        return (cache, onBehalfOf);
+    }
 
 
 ////////////////// FUNCTIONS END //////////////////////

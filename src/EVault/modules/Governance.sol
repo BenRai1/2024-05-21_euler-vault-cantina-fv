@@ -104,7 +104,6 @@ abstract contract GovernanceModule is IGovernance, BalanceUtils, BorrowUtils, LT
     function interestFee() public view virtual reentrantOK returns (uint16) {
         return vaultStorage.interestFee.toUint16();
     }
-
     /// @inheritdoc IGovernance
     function interestRateModel() public view virtual reentrantOK returns (address) {
         return vaultStorage.interestRateModel;

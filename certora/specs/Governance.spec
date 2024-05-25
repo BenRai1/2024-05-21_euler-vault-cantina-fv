@@ -1,6 +1,7 @@
 import "./Base.spec";
 import "./Base/governance.spec";
 using MockHookTarget as HookTarget;
+using ProtocolConfig as ProtocolConfig;
 
 // used to test running time
 use builtin rule sanity;
@@ -10,22 +11,115 @@ use rule privilegedOperation;
 //- interstRate should never be bigger than MAX_ALLOWED_INTEREST_RATE
 //- lastInterestAccumulatorUpdate should never be bigger than the current block timestamp
 //- totalBorrowed should never be bigger than totalShares
+//- borrowLTV should never be bigger than liquidationLTV
 
 //------------------------------- RULES TEST START ----------------------------------
 
+//convertFees reverts
+rule convertFeesRevertIntegraty(env e) {
+    //GENERAL VARIABLES
+    address actualCaller = actualCaller(e);
+    address user;
+        
+    //VALUES BEFORE
+    GovernanceHarness.VaultCache vaultCacheBefore = getVaultCacheHarness(e);
+    address protocolReceiver;
+    uint16 protocolFee;
+    (protocolReceiver, protocolFee) = ProtocolConfig.protocolFeeConfig(e,currentContract);
+    //Balances
+    GovernanceHarness.PackedUserSlot userDataBefore = getUserStorageDataHarness(user);
+
+    //FUNCTION CALL
+    convertFees@withrevert(e);
+    bool reverted = lastReverted;
+
+    //VALUES AFTER
+    GovernanceHarness.VaultCache vaultCacheAfter = getVaultCacheHarness(e);
+    GovernanceHarness.PackedUserSlot userDataAfter = getUserStorageDataHarness(user);
 
 
-//convertFees works
-rule convertFeesIntegraty(env e) {
+
+    //ASSERTS
+    // //assert2: if vaultCache.accumulatedFees = 0, stuff should not change
+    // assert(vaultCacheBefore.accumulatedFees == 0 => 
+    // vaultCacheBefore.accumulatedFees == vaultCacheAfter.accumulatedFees &&
+    // userDataBefore == userDataAfter,
+    //  "Accumulated fees or balances changed");
+
+    //assert3: if the protocolReceiver = 0 address, revert
+    assert(vaultCacheBefore.accumulatedFees != 0 && protocolReceiver == 0 && protocolFee != 0 => reverted, "Protocol receiver is 0");
 
 
-    //function call
-    convertFees(e);
-
-   
+    ///------------------------------- ASSERTS OK START ------------------------------
+        // //assert1: if hook target is zero address, revert
+        // assert(actualCaller == 0 => reverted, "ActualCaller is 0");
 }
 
 
+// convertFees works
+rule convertFeesIntegraty(env e) {
+  //VALUES BEFORE
+    //addresses
+    address protocolReceiver;
+    uint16 protocolFee;
+    (protocolReceiver, protocolFee) = ProtocolConfig.protocolFeeConfig(e,currentContract);
+    address governerReceiver = getGovernorReceiverHarness();
+    address user;
+    require(user != governerReceiver && user != protocolReceiver);
+    GovernanceHarness.Shares sharesBefore = getTotalSharesHarness();
+    uint16 finalProtocolFee = calculateProtocolFeeHarness(governerReceiver, protocolFee);
+
+    //Shares to move
+    GovernanceHarness.Shares governorSharesToAdd;
+    GovernanceHarness.Shares protocolSharesToAdd;
+    (governorSharesToAdd, protocolSharesToAdd) = calculateSharesToMoveHarness(e, sharesBefore, finalProtocolFee);
+
+    //Balances
+    GovernanceHarness.PackedUserSlot userDataBefore = getUserStorageDataHarness(user);
+    GovernanceHarness.PackedUserSlot governerReceiverDataBefore = getUserStorageDataHarness(governerReceiver);
+    GovernanceHarness.PackedUserSlot protocolReceiverDataBefore = getUserStorageDataHarness(protocolReceiver);
+    GovernanceHarness.Shares governorReceiverSharesBefore = unpackBalanceHarness(governerReceiverDataBefore);
+    GovernanceHarness.Shares protocolReceiverSharesBefore = unpackBalanceHarness(protocolReceiverDataBefore);
+
+
+
+  //FUNCTION CALL
+    convertFees(e);
+
+  //VALUES AFTER
+    //Balances
+    GovernanceHarness.PackedUserSlot userDataAfter = getUserStorageDataHarness(user);
+    GovernanceHarness.Shares sharesAfter = getTotalSharesHarness();
+    GovernanceHarness.PackedUserSlot governerReceiverDataAfter = getUserStorageDataHarness(governerReceiver);
+    GovernanceHarness.PackedUserSlot protocolReceiverDataAfter = getUserStorageDataHarness(protocolReceiver);
+    GovernanceHarness.Shares governorReceiverSharesAfter = unpackBalanceHarness(governerReceiverDataAfter);
+    GovernanceHarness.Shares protocolReceiverSharesAfter = unpackBalanceHarness(protocolReceiverDataAfter);
+
+
+
+  //ASSERTS
+      // assert1: balance of no othere account changes //@audit test of summary
+    assert(userDataBefore == governerReceiverDataBefore, "Balances has changed");
+
+    // // assert2: total shares should be the same as before
+    // assert(sharesBefore == sharesAfter, "Total shares have changed");
+
+    // // assert3: balance of governerReceiver should be added propperly
+    // assert(to_mathint(governorReceiverSharesAfter) == governorReceiverSharesBefore + governorSharesToAdd, "Governer receiver balance has not changed");
+
+    // // assert4: balance of protocolReceiver should be added propperly
+    // assert(to_mathint(protocolReceiverSharesAfter) == protocolReceiverSharesBefore + protocolSharesToAdd, "Protocol receiver balance has not changed");
+
+    // assert5: accumulated fees should be 0
+
+   ///------------------------------- ASSERTS OK START ------------------------------
+    // // assert1: balance of no othere account changes 
+    // assert(userDataBefore == userDataAfter, "Balances has changed");
+    
+
+
+
+} 
 
 
 
@@ -77,84 +171,70 @@ rule convertFeesIntegraty(env e) {
     }
 
 
-    //setLTV works //@audit reverts work, checking the final values does not work, times out. Tryied ghost variables but got error for storage analysis
+ //setLTV works //@audit checking the final values does not work becasue the State is still HAVOC https://prover.certora.com/output/8418/8704acbf970745d48b8a36270f527f22/?anonymousKey=978dcc2b6dce63ce294f88c72039f62b81533215
     rule setLTVIntegraty(env e) {
         address collateral;
+        require(collateral != 0);
         uint16 borrowLTV;
         GovernanceHarness.ConfigAmount newBorrowLTV = toConfigAmountHarness(borrowLTV);
         uint16 liquidationLTV;
         GovernanceHarness.ConfigAmount newLiquidationLTV = toConfigAmountHarness(liquidationLTV);
         uint32 rampDuration;
-        GovernanceHarness.LTVConfig currentLtvConfigBefore = getCurrentLTVConfigHarness(collateral); 
-        GovernanceHarness.ConfigAmount calculatedTvl = getLTVHarness(e, currentLtvConfigBefore, true);
-        bool isInitialized = currentLtvConfigBefore.initialized;
+
+        //VALUES BEFORE
+        GovernanceHarness.LTVConfig ltvConfigBefore = getCurrentLTVConfigHarness(collateral); 
+        bool isInitialized = ltvConfigBefore.initialized;
+        GovernanceHarness.ConfigAmount currentTvlBefore = calculateLiquidationLTVHarness(e, ltvConfigBefore, true);
         uint256 nuberOfLTVsBefore = LTVList().length;
-        require(nuberOfLTVsBefore < max_uint256);
-        require(e.block.timestamp + rampDuration < max_uint48);
-        bool lockedBefore = reentrancyLockedHarness();
-        address onBehalfeOf = getOnBehalfOfAccountHarness(e);
 
 
 
-        //LTV values before
-        uint16 borrowLTVBefore;
-        uint16 liquidationLTVBefore;
-        uint16 initialLiquidationLTVBefore;
-        uint48 targetTimestampBefore;
-        uint32 rampDurationBefore;
-        (borrowLTVBefore, liquidationLTVBefore, initialLiquidationLTVBefore, targetTimestampBefore, rampDurationBefore) = LTVFull(collateral);
-
-
-        //function call
-        setLTV@withrevert(e, collateral, borrowLTV, liquidationLTV, rampDuration);
-        bool reverted = lastReverted;
-
-        //LTV values after
-        uint16 borrowLTVAfter;
-        uint16 liquidationLTVAfter;
-        uint16 initialLiquidationLTVAfter;
-        uint48 targetTimestampAfter;
-        uint32 rampDurationAfter;
-        (borrowLTVAfter, liquidationLTVAfter, initialLiquidationLTVAfter, targetTimestampAfter, rampDurationAfter) = LTVFull(collateral);
-        uint256 nuberOfLTVsAfter = LTVList().length;
-        GovernanceHarness.LTVConfig currentLtvConfigAfter = getCurrentLTVConfigHarness(collateral); 
-
-        ///------------------------------- ASSERTS OK START----------------------
-            // //collataral should not be the current contract
-            // assert(collateral == currentContract => reverted, "Collateral is the current contract");
-
-            // //borrowLTV should not be bigger than the liquidationLTV
-            // assert(newBorrowLTV > newLiquidationLTV => reverted, "Borrow LTV is bigger than liquidation LTV");
-
-            // //if the new LTV values is higher than the current LTV values and the rampDuration is bigger than 0, revert
-            // assert(newLiquidationLTV >= calculatedTvl && rampDuration > 0 => reverted, "Function should revert");
-
-            // //if the collateral was not initalized, ltvList is 1 longer
-            // assert(!reverted && !isInitialized => nuberOfLTVsAfter ==  assert_uint256(nuberOfLTVsBefore +1), "Uninitalized LTV is not added to the ltvList");
-            // assert(!reverted && isInitialized => nuberOfLTVsAfter == nuberOfLTVsBefore, "Initalized LTV was added to the ltvList");
-
-            // //should not revert if non of the revert issue are met + msg.value == 0
-            // assert(
-            // !(collateral == currentContract) && 
-            // !(newBorrowLTV > newLiquidationLTV) && 
-            // !(newLiquidationLTV >= calculatedTvl && rampDuration > 0) 
-            // && e.msg.value == 0 &&
-            // lockedBefore == false &&
-            // onBehalfeOf == governorAdmin()
-            // => !reverted, "Function should not revert");
-
-        ///------------------------------- ASSERTS OK END----------------------
+        //FUNCTION CALL
+        setLTV(e, collateral, borrowLTV, liquidationLTV, rampDuration);
         
 
-        //if the function does not revert, the LTV values are set correctly
-         assert(!reverted => borrowLTVAfter == borrowLTV, "Borrow LTV was not set correctly");
-        //  assert(!reverted => liquidationLTVAfter == liquidationLTV, "Liquidation LTV was not set correctly");     
-        //  assert(!reverted => initialLiquidationLTVAfter == calculatedTvl, "Initial liquidation LTV was not set correctly"); 
-        //  assert(!reverted => targetTimestampAfter == assert_uint48(e.block.timestamp + rampDuration), "Target timestamp was not set correctly");
-        //  assert(!reverted => rampDurationAfter == rampDuration, "Ramp duration was not set correctly");
-        //  assert(!reverted => currentLtvConfigAfter.initialized == true, "Initialized was not set correctly"); //@audit use a ghost variable for initialized(??)
+        //VALUES AFTER
+        GovernanceHarness.LTVConfig LTVConfigAfter = getCurrentLTVConfigHarness(collateral);
+        uint256 nuberOfLTVsAfter = LTVList().length;
 
+        //maybe try this
+        //LTV values after
+        // uint16 borrowLTVAfter;
+        // uint16 liquidationLTVAfter;
+        // uint16 initialLiquidationLTVAfter;
+        // uint48 targetTimestampAfter;
+        // uint32 rampDurationAfter;
+        // (borrowLTVAfter, liquidationLTVAfter, initialLiquidationLTVAfter, targetTimestampAfter, rampDurationAfter) = LTVFull(collateral);
+
+
+
+        //ASSERTS
+        // //assert1: borrowLTVAfter = newBorrowLTV 
+        // assert(LTVConfigAfter.borrowLTV == newBorrowLTV, "Borrow LTV was not set correctly");
+
+        // //assert2: liquidationLTVAfter = liquidationLTV
+        // assert(LTVConfigAfter.liquidationLTV == newLiquidationLTV, "Liquidation LTV was not set correctly");
+
+        // //assert3: initialLiquidationLTVAfter = ???
+        // assert(LTVConfigAfter.initialLiquidationLTV == currentTvlBefore, "Initial liquidation LTV was not set correctly");
+
+        // //assert4: targetTimestampAfter = e.block.timestamp + rampDuration
+        // assert(LTVConfigAfter.targetTimestamp == assert_uint48(e.block.timestamp + rampDuration), "Target timestamp was not set correctly");
+
+        // //assert5: rampDurationAfter = rampDuration
+        // assert(LTVConfigAfter.rampDuration == rampDuration, "Ramp duration was not set correctly");
+
+        // //assert6: currentLtvConfigAfter.initialized = true
+        // assert(LTVConfigAfter.initialized == true, "Initialized was not set correctly");
+
+        //--------------------------------- ASSERTS OK START ------------------------------
+        
+            // //assert7: if !initailized, the LTV is added to the LTVList
+            assert(!isInitialized => nuberOfLTVsAfter ==  assert_uint256(nuberOfLTVsBefore +1), "Uninitalized LTV is not added to the ltvList");
+
+        //--------------------------------- ASSERTS OK END ------------------------------
     }
+   
 
 
 
@@ -164,6 +244,36 @@ rule convertFeesIntegraty(env e) {
 
 
 
+
+
+    //setLTV reverts check
+    rule setLTVRevertIntegraty(env e) {
+        address collateral;
+        uint16 borrowLTV;
+        uint16 liquidationLTV;
+        uint32 rampDuration;
+
+        //VALUES BEFORE
+        GovernanceHarness.LTVConfig ltvConfigBefore = getCurrentLTVConfigHarness(collateral);
+        GovernanceHarness.ConfigAmount currentTvlBefore = calculateLiquidationLTVHarness(e, ltvConfigBefore, true);
+
+        
+
+        //FUNCTION CALL
+        setLTV@withrevert(e, collateral, borrowLTV, liquidationLTV, rampDuration);
+        bool reverted = lastReverted;
+
+
+        //ASSERTS
+        //assert1:revert if collataral = currentContract
+        assert(collateral == currentContract => reverted, "Collateral is the current contract");
+
+        //assert2:revert if borrowLTV > liquidationLTV
+        assert(borrowLTV > liquidationLTV => reverted, "Borrow LTV is bigger than liquidation LTV");
+
+        //assert3:revert if new liquidationLTV >= currentTvlBefore and rampDuration > 0, revert
+        assert(liquidationLTV >= currentTvlBefore && rampDuration > 0 => reverted, "Function should revert");
+    }
 
     //setInterestFee works 
     rule setInterestFeeIntegraty(env e) {
@@ -207,24 +317,14 @@ rule convertFeesIntegraty(env e) {
         uint32 hookedOpsAfter;
         (hookTargetAfter, hookedOpsAfter) = hookConfig();
 
-
-
         //if newHookTarget != address(0) and the selector is not the correct one, revert
         assert(newHookTarget != 0 && selector != targetSelector => reverted, "The selector is not the right one");
 
-        //when function passes, the data is set correctly
-        assert(!reverted => hookTargetAfter == newHookTarget && hookedOpsAfter == wrapedHookedOps, "Hook config values were not set correctly");
         //if the hookedOps is bigger or equal to OP_MAX_VALUE, revert
         assert(hookedOps >= getOP_MAX_VALUEHarness() => reverted, "Hooked ops value is too high");
 
-        // //should not revert if non of the revert issue are met //@audit maybe implement this later
-        // assert(!(newHookTarget != 0 && selector != targetSelector ) && 
-        // !(hookedOps >= getOP_MAX_VALUEHarness()) &&
-        // onBehalfOf == governorAdmin() &&
-        // e.msg.value == 0 &&
-        // lockedBefore == false
-        //  => !reverted, "Function should not revert");
-
+        //when function passes, the data is set correctly
+        assert(!reverted => hookTargetAfter == newHookTarget && hookedOpsAfter == wrapedHookedOps, "Hook config values were not set correctly");
     }
 
     // Spesific state variables can only be changed by the governor

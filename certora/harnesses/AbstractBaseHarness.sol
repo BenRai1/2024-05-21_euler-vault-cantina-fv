@@ -12,6 +12,7 @@ import "../../src/EVault/shared/Base.sol";
 // while also making function definitions sharable among harnesses via
 // AbstractBase. AbstractBaseHarness includes the shared function definitions.
 abstract contract AbstractBaseHarness is Base {
+    uint256 constant SHARES_MASK = 0x000000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
     function getLTVConfig(address collateral) external view returns (LTVConfig memory) {
         return vaultStorage.ltvLookup[collateral];
@@ -82,5 +83,13 @@ abstract contract AbstractBaseHarness is Base {
         return isOperationDisabledExt(OP_SKIM);
     }
 
+
+    //--------------------------------------------------------------------------
+    // Modifier checks
+    //--------------------------------------------------------------------------
+
+    function reentrancyLockedHarness() external view returns (bool) {
+        return vaultStorage.reentrancyLocked;
+    }
 
 }

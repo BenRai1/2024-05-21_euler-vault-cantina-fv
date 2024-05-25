@@ -84,7 +84,9 @@ abstract contract Base is EVCClient, Cache {
         returns (VaultCache memory vaultCache, address account)
     {
         vaultCache = updateVault();
-        account = EVCAuthenticateDeferred(CONTROLLER_NEUTRAL_OPS & operation == 0);
+        account = EVCAuthenticateDeferred(CONTROLLER_NEUTRAL_OPS & operation == 0); //i: EVCAuthenticateDeferred(bool checkController)
+        //i: if the opperation and CONTROLLER_NEUTRAL_OPS do not have any common bits, then the result of the AND operation will be 0 => true, check the controller
+
 
         callHook(vaultCache.hookedOps, operation, account);
         EVCRequireStatusChecks(accountToCheck == CHECKACCOUNT_CALLER ? account : accountToCheck);

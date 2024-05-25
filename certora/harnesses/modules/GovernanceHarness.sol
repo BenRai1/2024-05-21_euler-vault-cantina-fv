@@ -60,9 +60,9 @@ contract GovernanceHarness is Governance, AbstractBaseHarness {
         return Flags.wrap(value);
     }
 
-    function reentrancyLockedHarness() external returns (bool) {
-        return vaultStorage.reentrancyLocked;
-    }
+    // function reentrancyLockedHarness() external returns (bool) {
+    //     return vaultStorage.reentrancyLocked;
+    // }
 
     function getHookTargetSelectorHarness() external returns (bytes4) {
         return this.isHookTarget.selector;
@@ -77,7 +77,7 @@ contract GovernanceHarness is Governance, AbstractBaseHarness {
     }
 
     function getVaultCacheHarness() external returns (VaultCache memory) {
-        return loadVault();
+        return updateVault();
     }
 
     function getInterestRateHarness() external returns (uint72) {
@@ -106,6 +106,78 @@ contract GovernanceHarness is Governance, AbstractBaseHarness {
         }
 
         return newInterestRate;
+    }
+
+    function calculateLiquidationLTVHarness(LTVConfig memory self, bool liquidation) external returns (ConfigAmount) {
+        if (!liquidation) {
+            return self.borrowLTV;
+        }
+
+        if (block.timestamp >= self.targetTimestamp || self.liquidationLTV >= self.initialLiquidationLTV) {
+            return self.liquidationLTV;
+        }
+
+        uint256 currentLiquidationLTV = self.initialLiquidationLTV.toUint16();
+
+        unchecked {
+            uint256 targetLiquidationLTV = self.liquidationLTV.toUint16();
+            uint256 timeRemaining = self.targetTimestamp - block.timestamp;
+
+            // targetLiquidationLTV < initialLiquidationLTV and timeRemaining <= rampDuration
+            currentLiquidationLTV = targetLiquidationLTV
+                + (currentLiquidationLTV - targetLiquidationLTV) * timeRemaining / self.rampDuration;
+        }
+
+        // because ramping happens only when liquidation LTV decreases, it's safe to down-cast the new value
+        return ConfigAmount.wrap(uint16(currentLiquidationLTV));
+    }
+
+    function getUserStorageDataHarness(address user) external returns (PackedUserSlot) {
+        return vaultStorage.users[user].data;
+    }
+
+    function getGovernorReceiverHarness() external returns (address) {
+        return vaultStorage.feeReceiver;
+    }
+
+    function getTotalSharesHarness() public returns (Shares){
+    return vaultStorage.totalShares;
+    }
+
+    function getCurrentVaultCacheHarness() external returns (VaultCache memory){
+        VaultCache memory vaultCache;
+        (vaultCache.asset, vaultCache.oracle, vaultCache.unitOfAccount) = ProxyUtils.metadata();
+        vaultCache.lastInterestAccumulatorUpdate = vaultStorage.lastInterestAccumulatorUpdate;
+        vaultCache.cash = vaultStorage.cash;
+        vaultCache.totalBorrows = vaultStorage.totalBorrows;
+        vaultCache.totalShares = vaultStorage.totalShares;
+        vaultCache.supplyCap = vaultStorage.supplyCap.resolve();
+        vaultCache.borrowCap = vaultStorage.borrowCap.resolve();
+        vaultCache.hookedOps = vaultStorage.hookedOps;
+        vaultCache.snapshotInitialized = true;
+        vaultCache.accumulatedFees = vaultStorage.accumulatedFees;
+        vaultCache.configFlags = vaultStorage.configFlags;
+        vaultCache.interestAccumulator = vaultStorage.interestAccumulator;
+        return vaultCache;
+    }
+
+    function calculateProtocolFeeHarness(address governorReceiver, uint16 protocolFee) external returns (uint16) {
+        if (governorReceiver == address(0)) {
+            protocolFee = CONFIG_SCALE; 
+        } else if (protocolFee > MAX_PROTOCOL_FEE_SHARE) {
+            protocolFee = MAX_PROTOCOL_FEE_SHARE;
+        }
+        return protocolFee;
+    }
+
+    function calculateSharesToMoveHarness(Shares accumulatedFees, uint16 protocolFee) external returns (Shares, Shares) {
+        Shares governorShares = accumulatedFees.mulDiv(CONFIG_SCALE - protocolFee, CONFIG_SCALE);
+        Shares protocolShares = accumulatedFees - governorShares;
+        return (governorShares, protocolShares);
+    }
+    
+    function unpackBalanceHarness(PackedUserSlot data) external returns (Shares) {
+        return Shares.wrap(uint112(PackedUserSlot.unwrap(data) & SHARES_MASK));
     }
 
     
