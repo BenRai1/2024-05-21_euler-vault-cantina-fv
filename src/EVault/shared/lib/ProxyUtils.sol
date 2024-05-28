@@ -23,7 +23,7 @@ library ProxyUtils {
     // When `useView` modifier is used, the original caller's address is attached to the call data along with the metadata
     function useViewCaller() internal pure returns (address viewCaller) {
         assembly {
-            viewCaller := shr(96, calldataload(sub(calldatasize(), add(PROXY_METADATA_LENGTH, 20))))
+            viewCaller := shr(96, calldataload(sub(calldatasize(), add(PROXY_METADATA_LENGTH, 20)))) //i: PROXY_METADATA_LENGTH = 60;
         }
     }
 }

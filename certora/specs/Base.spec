@@ -40,13 +40,14 @@ methods {
     // safeTransferFrom is summarized as transferFrom
     // from DummyERC20a to avoid dealing with the low-level `call`
     function _.safeTransferFrom(address token, address from, address to, uint256 value, address permit2) internal with (env e)=> CVLTrySafeTransferFrom(e, from, to, value) expect (bool, bytes memory);
+    function _.computeInterestRate(address vault, uint256 cash, uint256 borrows) external => CVLComputeInterestRate(vault) expect (uint256);
+
     function _.tryBalanceTrackerHook(address account, uint256 newAccountBalance, bool forfeitRecentReward) internal => NONDET;
     function _.balanceTrackerHook(address account, uint256 newAccountBalance, bool forfeitRecentReward) external => NONDET;
 
     // nondet for now, dispatch if needed
     function _.checkVaultStatus() external => NONDET;
     function _.checkAccountStatus(address) external => NONDET;
-    function _.computeInterestRate(address, uint256, uint256) external => NONDET;
     function _.computeInterestRateView(address, uint256, uint256) external => NONDET;
 }
 
@@ -106,5 +107,16 @@ function CVLTrySafeTransferFrom(env e, address from, address to, uint256 value) 
     bytes ret; // Ideally bytes("") if there is a way to do this
     return (ERC20a.transferFrom(e, from, to, value), ret);
 }
+
+function CVLComputeInterestRate(address vault) returns uint256 {
+        return GhostCalculatedInterestRate[vault];
+}
+
+
+ghost mapping(address => uint256) GhostCalculatedInterestRate{
+        axiom forall address a. GhostCalculatedInterestRate[a] < max_uint72;
+}
+
+
 
 

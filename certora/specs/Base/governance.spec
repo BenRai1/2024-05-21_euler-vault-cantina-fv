@@ -1,3 +1,4 @@
+import "./abstractBase.spec";
 
 /////////////////// METHODS START ///////////////////////
     methods {
@@ -42,11 +43,14 @@
     function permit2Address() external returns (address) envfree;
     function LTVFull(address collateral) external returns (uint16, uint16, uint16, uint48, uint32) envfree;
     function calculateProtocolFeeHarness(address governorReceiver, uint16 protocolFee) external returns (uint16) envfree;
+    function interestRateHarness() external returns (uint72) envfree;
 
 
     function _.isHookTarget() external => NONDET;
     //Function summary
-    function _.initOperation(uint32 operation, address accountToCheck) internal with(env e) => CVLInitOperation(e, operation, accountToCheck) expect (GovernanceHarness.VaultCache, address) ALL;
+    function Base.initOperation(uint32 operation, address accountToCheck) internal returns (GovernanceHarness.VaultCache memory, address) with(env e) => CVLInitOperation(e, operation, accountToCheck);
+
+    function Cache.updateVault() internal returns (GovernanceHarness.VaultCache memory) with(env e) => CVLUpdateVault();
 
 
     
@@ -60,38 +64,68 @@
 ///////////////// DEFINITIONS START /////////////////////
 
     definition GOVERNOR_ADMIN_ONLY_FUNCTIONS(method f) returns bool =
-    f.selector == sig:clearLTV(address).selector ||
-    f.selector == sig:setCaps(uint16,uint16).selector ||
-    f.selector == sig:setConfigFlags(uint32).selector ||
-    f.selector == sig:setFeeReceiver(address).selector ||
-    f.selector == sig:setGovernorAdmin(address).selector ||
-    f.selector == sig:setHookConfig(address,uint32).selector ||
-    f.selector == sig:setInterestFee(uint16).selector ||
-    f.selector == sig:setInterestRateModel(address).selector ||
-    f.selector == sig:setLiquidationCoolOffTime(uint16).selector ||
-    f.selector == sig:setLTV(address,uint16,uint16,uint32).selector ||
+        f.selector == sig:clearLTV(address).selector ||
+        f.selector == sig:setCaps(uint16,uint16).selector ||
+        f.selector == sig:setConfigFlags(uint32).selector ||
+        f.selector == sig:setFeeReceiver(address).selector ||
+        f.selector == sig:setGovernorAdmin(address).selector ||
+        f.selector == sig:setHookConfig(address,uint32).selector ||
+        f.selector == sig:setInterestFee(uint16).selector ||
+        f.selector == sig:setInterestRateModel(address).selector ||
+        f.selector == sig:setLiquidationCoolOffTime(uint16).selector ||
+        f.selector == sig:setLTV(address,uint16,uint16,uint32).selector ||
     f.selector == sig:setMaxLiquidationDiscount(uint16).selector;
 
 
     definition HARNESS_FUNCTIONS(method f) returns bool =
-    f.selector == sig:getOnBehalfOfAccountHarness().selector ||
-    f.selector == sig:getCFG_MAX_VALUEHarness().selector ||
-    f.selector == sig:getOP_MAX_VALUEHarness().selector ||
-    f.selector == sig:getMAX_SANE_AMOUNTHarness().selector ||
-    f.selector == sig:toConfigAmountHarness(uint16 ).selector ||
-    f.selector == sig:getLTVHarness(GovernanceHarness.LTVConfig memory, bool).selector ||
-    f.selector == sig:getCurrentLTVConfigHarness(address ).selector ||
-    f.selector == sig:wrapAmountCapHarness(uint16 ).selector ||
-    f.selector == sig:resolveAmountCapHarness(GovernanceHarness.AmountCap).selector ||
-    f.selector == sig:wrapFlagsHarness(uint32).selector ||
+        f.selector == sig:getOnBehalfOfAccountHarness().selector ||
+        f.selector == sig:getCFG_MAX_VALUEHarness().selector ||
+        f.selector == sig:getOP_MAX_VALUEHarness().selector ||
+        f.selector == sig:getMAX_SANE_AMOUNTHarness().selector ||
+        f.selector == sig:toConfigAmountHarness(uint16 ).selector ||
+        f.selector == sig:getLTVHarness(GovernanceHarness.LTVConfig memory, bool).selector ||
+        f.selector == sig:getCurrentLTVConfigHarness(address ).selector ||
+        f.selector == sig:wrapAmountCapHarness(uint16 ).selector ||
+        f.selector == sig:resolveAmountCapHarness(GovernanceHarness.AmountCap).selector ||
+        f.selector == sig:wrapFlagsHarness(uint32).selector ||
+        f.selector == sig:unitOfAccount().selector ||
+        f.selector == sig:vaultCacheOracleConfigured().selector ||
+        f.selector == sig:vaultIsController(address).selector ||
+        f.selector == sig:vaultIsOnlyController(address).selector ||
+        f.selector == sig:getBalanceAndForwarderExt(address).selector ||
+        f.selector == sig:getCollateralsExt(address).selector ||
+        f.selector == sig:getLTVConfig(address).selector ||
+        f.selector == sig:isAccountStatusCheckDeferredExt(address).selector ||
+        f.selector == sig:isCollateralEnabledExt(address,address).selector ||
+        f.selector == sig:isDepositDisabled().selector ||
+        f.selector == sig:isMintDisabled().selector ||
+        f.selector == sig:isOperationDisabledExt(uint32).selector ||
+        f.selector == sig:isRedeemDisabled().selector ||
+        f.selector == sig:isSkimDisabled().selector ||
+        f.selector == sig:isWithdrawDisabled().selector ||
+        f.selector == sig:calculateLiquidationLTVHarness(GovernanceHarness.LTVConfig,bool).selector ||
+        f.selector == sig:calculateProtocolFeeHarness(address,uint16).selector ||
+        f.selector == sig:calculateSharesToMoveHarness(GovernanceHarness.Shares,uint16).selector ||
+        f.selector == sig:getCurrentVaultCacheHarness().selector ||
+        f.selector == sig:getGUARANTEED_INTEREST_FEE_MAXHarness().selector ||
+        f.selector == sig:getGUARANTEED_INTEREST_FEE_MINHarness().selector ||
+        f.selector == sig:getGovernorReceiverHarness().selector ||
+        f.selector == sig:getHookTargetSelectorHarness().selector ||
+        f.selector == sig:getInterestRateHarness().selector ||
+        f.selector == sig:getTargetInterestRateHarness(address,GovernanceHarness.VaultCache).selector ||
+        f.selector == sig:getTotalSharesHarness().selector ||
+        f.selector == sig:getUserStorageDataHarness(address).selector ||
+        f.selector == sig:getVaultCacheHarness().selector ||
+        f.selector == sig:isValidInterestFeeHarness(uint16).selector ||
+        f.selector == sig:unpackBalanceHarness(GovernanceHarness.PackedUserSlot).selector ||
     f.selector == sig:reentrancyLockedHarness().selector;
 
     definition DISABLED_FUNCTIONS(method f) returns bool =
-    f.selector == sig:isDepositDisabled().selector ||
-    f.selector == sig:isMintDisabled().selector ||
-    f.selector == sig:isOperationDisabledExt(uint32).selector ||
-    f.selector == sig:isRedeemDisabled().selector ||
-    f.selector == sig:isSkimDisabled().selector ||
+        f.selector == sig:isDepositDisabled().selector ||
+        f.selector == sig:isMintDisabled().selector ||
+        f.selector == sig:isOperationDisabledExt(uint32).selector ||
+        f.selector == sig:isRedeemDisabled().selector ||
+        f.selector == sig:isSkimDisabled().selector ||
     f.selector == sig:isWithdrawDisabled().selector;
 
 
@@ -107,6 +141,12 @@
         GovernanceHarness.VaultCache cache = getCurrentVaultCacheHarness();
         return (cache, onBehalfOf);
     }
+
+    function CVLUpdateVault() returns GovernanceHarness.VaultCache {
+        GovernanceHarness.VaultCache vaultCache = getCurrentVaultCacheHarness();
+        return vaultCache;
+    }
+ 
 
 
 ////////////////// FUNCTIONS END //////////////////////

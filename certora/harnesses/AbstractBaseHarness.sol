@@ -12,7 +12,13 @@ import "../../src/EVault/shared/Base.sol";
 // while also making function definitions sharable among harnesses via
 // AbstractBase. AbstractBaseHarness includes the shared function definitions.
 abstract contract AbstractBaseHarness is Base {
+    uint256 constant BALANCE_FORWARDER_MASK = 0x8000000000000000000000000000000000000000000000000000000000000000;
+    uint256 constant OWED_MASK = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000000000000000;
     uint256 constant SHARES_MASK = 0x000000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 constant OWED_OFFSET = 112;
+    uint256 constant MAX_ALLOWED_INTEREST_RATE = 291867278914945094175;
+
+
 
     function getLTVConfig(address collateral) external view returns (LTVConfig memory) {
         return vaultStorage.ltvLookup[collateral];
@@ -91,5 +97,20 @@ abstract contract AbstractBaseHarness is Base {
     function reentrancyLockedHarness() external view returns (bool) {
         return vaultStorage.reentrancyLocked;
     }
+
+    function getOwedHarness(address account) external view returns (Owed){
+        return Owed.wrap(uint144((PackedUserSlot.unwrap(vaultStorage.users[account].data) & OWED_MASK) >> OWED_OFFSET));
+    }
+
+
+    function getHookTargetHarness() external view returns (address) {
+        return vaultStorage.hookTarget;
+    }
+
+    function useViewCallerHarness() external pure returns (address) {
+        return ProxyUtils.useViewCaller();
+    }
+
+
 
 }

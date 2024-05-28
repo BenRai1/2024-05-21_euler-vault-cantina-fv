@@ -8,6 +8,8 @@ import {IIRM} from "../../../src/InterestRateModels/IIRM.sol";
 
 
 contract GovernanceHarness is Governance, AbstractBaseHarness {
+    uint256 private constant SHARES_MASK = 0x000000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    
     using TypesLib for uint16;
     constructor(Integrations memory integrations) Governance (integrations) {}
 
@@ -59,10 +61,6 @@ contract GovernanceHarness is Governance, AbstractBaseHarness {
     function wrapFlagsHarness(uint32 value) external pure returns (Flags) {
         return Flags.wrap(value);
     }
-
-    // function reentrancyLockedHarness() external returns (bool) {
-    //     return vaultStorage.reentrancyLocked;
-    // }
 
     function getHookTargetSelectorHarness() external returns (bytes4) {
         return this.isHookTarget.selector;
@@ -178,6 +176,10 @@ contract GovernanceHarness is Governance, AbstractBaseHarness {
     
     function unpackBalanceHarness(PackedUserSlot data) external returns (Shares) {
         return Shares.wrap(uint112(PackedUserSlot.unwrap(data) & SHARES_MASK));
+    }
+
+    function interestRateHarness() external returns (uint72) {
+        return vaultStorage.interestRate;
     }
 
     
