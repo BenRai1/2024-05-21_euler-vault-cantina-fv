@@ -8,8 +8,7 @@ import {IIRM} from "../../../src/InterestRateModels/IIRM.sol";
 
 
 contract GovernanceHarness is Governance, AbstractBaseHarness {
-    uint256 private constant SHARES_MASK = 0x000000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-    
+        
     using TypesLib for uint16;
     constructor(Integrations memory integrations) Governance (integrations) {}
 
@@ -180,6 +179,11 @@ contract GovernanceHarness is Governance, AbstractBaseHarness {
 
     function interestRateHarness() external returns (uint72) {
         return vaultStorage.interestRate;
+    }
+
+    function calculateInterestRateHarness(uint256 newInterestRate) external returns (uint256 finalInterestRate) {
+        if (newInterestRate > MAX_ALLOWED_INTEREST_RATE) finalInterestRate = MAX_ALLOWED_INTEREST_RATE;
+        else finalInterestRate = newInterestRate;
     }
 
     

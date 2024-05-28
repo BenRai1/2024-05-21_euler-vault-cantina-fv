@@ -32,7 +32,7 @@ use builtin rule sanity;
     }
 
 
-    //only spesific functions should change if the controller is enabled
+
 
 
 
@@ -51,6 +51,25 @@ use builtin rule sanity;
 //------------------------------- RULES TEST END ----------------------------------
 
 //------------------------------- RULES PROBLEMS START ----------------------------------
+
+
+    //only spesific functions should change snapshot //@audit checkAccountStatus is Havoking all variables => changes snapshot (_.checkAccountStatus(address) external => DISPATCHER(true); does not work)
+    rule onlyChangeSnapshot(env e, method f, calldataarg arg) filtered{f->
+        !f.isView && !f.isPure && !BASE_HARNESS_FUNCTIONS(f) && !HARNESSES_FUNCTIONS(f)}{
+        //VALUES BEFORE
+        RiskManagerHarness.Snapshot snapshotBefore = getSnapshotHarness();
+
+        //FUNCTION CALL 
+        f(e, arg);
+
+
+        //VALUES AFTER
+        RiskManagerHarness.Snapshot snapshotAfter = getSnapshotHarness();
+
+        //ASSERTS
+        //assert1: if snapshotBefore != snapshotAfter, the called function should be checkVaultStatus
+        assert(snapshotBefore != snapshotAfter => f.selector == sig:checkVaultStatus().selector, "Function should be checkVaultStatus"); 
+    }
 
 //------------------------------- RULES PROBLEMS START ----------------------------------
 
@@ -129,7 +148,7 @@ use builtin rule sanity;
         bool snapshotInitalizedAfter = vaultCacheAfter.snapshotInitialized;
         RiskManagerHarness.Snapshot snapshotAfter = getSnapshotHarness();
         uint72 interestRateAfter = currentContract.vaultStorage.interestRate;
-        // uint72 interestRateAfter = getInterestRateHarness();
+        
 
 
         //ASSERTS
@@ -147,6 +166,8 @@ use builtin rule sanity;
 
         //assert5: vaultStorage.initeresRate is equal to calculated interest rate
         assert(irm != 0 => interestRateAfter == calculatedInterestRate, "Interest rate does not match");
+
+        assert(false);
     }
 
     //checkVaultStatus reverts

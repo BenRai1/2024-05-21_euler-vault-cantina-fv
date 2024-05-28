@@ -33,6 +33,8 @@ import "./abstractBase.spec";
         f.selector == sig:getLiabilityValueHarness(RiskManagerHarness.VaultCache,address,RiskManagerHarness.Owed,bool).selector ||
         f.selector == sig:totalAssetsHarness(RiskManagerHarness.VaultCache).selector;
 
+
+
 ///////////////// DEFINITIONS END /////////////////////
 
 ////////////////// FUNCTIONS START //////////////////////

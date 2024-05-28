@@ -8,6 +8,9 @@ import "../../../src/EVault/modules/Liquidation.sol";
 
 contract LiquidationHarness is AbstractBaseHarness, Liquidation {
 
+
+    using TypesLib for uint16;
+    using TypesLib for uint256;
     constructor(Integrations memory integrations) Liquidation(integrations) {}
 
     function calculateLiquidityExternal(
@@ -43,6 +46,158 @@ contract LiquidationHarness is AbstractBaseHarness, Liquidation {
         view
         returns (uint256 value) {
             return getCollateralValue(vaultCache, account, collateral, liquidation);
+    }
+
+    function getCurrentLiquidationCacheHarness(
+        VaultCache memory vaultCache,
+        address liquidator,
+        address violator,
+        address collateral,
+        uint256 desiredRepay)
+        external returns (
+            address liquidatorReturn,
+            address violatorReturn,
+            address collateralReturn,
+            address[] memory collaterals,
+            Assets liability,
+            Assets repay,
+            uint256 yieldBalance
+        ) {
+            liquidatorReturn = liquidator;
+            violatorReturn = violator;
+            collateralReturn = collateral;
+            collaterals = getCollaterals(violator);
+            liability = getCurrentOwed(vaultCache, violator).toAssetsUp();
+            repay = Assets.wrap(0); //i: 0
+            yieldBalance = 0;
+
+            // Violator has no liabilities, liquidation is a no-op
+            if (liability.isZero()) return (liquidator, violator, collateral, collaterals, liability, repay, yieldBalance);
+
+            // Calculate max yield and repay
+            (uint256 collateralAdjustedValue, uint256 liabilityValue) =
+                calculateLiquidity(vaultCache, violator, collaterals, true);
+            // no violation
+            if (collateralAdjustedValue > liabilityValue) return (liquidator, violator, collateral, collaterals, liability, repay, yieldBalance);
+
+            uint256 discountFactor = collateralAdjustedValue * 1e18 / liabilityValue; // discountFactor = health score = 1 - discount
+            {
+                uint256 minDiscountFactor;
+                unchecked {
+                    // discount <= config scale, so discount factor >= 0
+                    minDiscountFactor = 1e18 - uint256(1e18) * vaultStorage.maxLiquidationDiscount.toUint16() / CONFIG_SCALE;
+                }
+                if (discountFactor < minDiscountFactor) discountFactor = minDiscountFactor;
+            }
+
+            // Compute maximum yield using mid-point prices
+
+            uint256 collateralBalance = IERC20(collateral).balanceOf(violator);
+            uint256 collateralValue =
+                vaultCache.oracle.getQuote(collateralBalance, collateral, vaultCache.unitOfAccount);
+
+            if (collateralValue == 0) {
+                yieldBalance = collateralBalance;
+                return  (liquidator, violator, collateral, collaterals, liability, repay, yieldBalance);
+            }
+
+            uint256 maxRepayValue = liabilityValue;
+            uint256 maxYieldValue = maxRepayValue * 1e18 / discountFactor;
+
+            if (collateralValue < maxYieldValue) {
+                maxRepayValue = collateralValue * discountFactor / 1e18;
+                maxYieldValue = collateralValue;
+            }
+
+            repay = (maxRepayValue * liability.toUint() / liabilityValue).toAssets();
+            yieldBalance = maxYieldValue * collateralBalance / collateralValue;
+
+            // Adjust for desired repay
+
+            if (desiredRepay != type(uint256).max) {
+                uint256 maxRepay = repay.toUint();
+                if (desiredRepay > maxRepay) revert E_ExcessiveRepayAmount();
+
+                if (maxRepay > 0) {
+                    yieldBalance = desiredRepay * yieldBalance / maxRepay;
+                    repay = desiredRepay.toAssets();
+                }
+            }
+    }
+
+    function getCurrentVaultCacheHarness() external returns (VaultCache memory){
+        VaultCache memory vaultCache;
+        (vaultCache.asset, vaultCache.oracle, vaultCache.unitOfAccount) = ProxyUtils.metadata();
+        vaultCache.lastInterestAccumulatorUpdate = vaultStorage.lastInterestAccumulatorUpdate;
+        vaultCache.cash = vaultStorage.cash;
+        vaultCache.totalBorrows = vaultStorage.totalBorrows;
+        vaultCache.totalShares = vaultStorage.totalShares;
+        vaultCache.supplyCap = vaultStorage.supplyCap.resolve();
+        vaultCache.borrowCap = vaultStorage.borrowCap.resolve();
+        vaultCache.hookedOps = vaultStorage.hookedOps;
+        vaultCache.snapshotInitialized = vaultStorage.snapshotInitialized;
+        vaultCache.accumulatedFees = vaultStorage.accumulatedFees;
+        vaultCache.configFlags = vaultStorage.configFlags;
+        vaultCache.interestAccumulator = vaultStorage.interestAccumulator;
+        return vaultCache;
+    }
+
+    function calculateMaxLiquidationHarness(LiquidationCache memory liqCache, VaultCache memory vaultCache)
+        external
+        view
+        returns (LiquidationCache memory)
+    {
+        // Check account health
+
+        (uint256 collateralAdjustedValue, uint256 liabilityValue) =
+            calculateLiquidity(vaultCache, liqCache.violator, liqCache.collaterals, true);
+
+        // no violation
+        if (collateralAdjustedValue > liabilityValue) return liqCache;
+
+        // Compute discount
+
+        uint256 discountFactor = collateralAdjustedValue * 1e18 / liabilityValue; // discountFactor = health score = 1 - discount
+        {
+            uint256 minDiscountFactor;
+            unchecked {
+                // discount <= config scale, so discount factor >= 0
+                minDiscountFactor = 1e18 - uint256(1e18) * vaultStorage.maxLiquidationDiscount.toUint16() / CONFIG_SCALE;
+            }
+            if (discountFactor < minDiscountFactor) discountFactor = minDiscountFactor;
+        }
+
+        // Compute maximum yield using mid-point prices
+
+        uint256 collateralBalance = IERC20(liqCache.collateral).balanceOf(liqCache.violator);
+        uint256 collateralValue =
+            vaultCache.oracle.getQuote(collateralBalance, liqCache.collateral, vaultCache.unitOfAccount);
+
+        if (collateralValue == 0) {
+            // Worthless collateral can be claimed with no repay. The collateral can be actually worthless, or the amount of available
+            // collateral could be non-representable in the unit of account (rounded down to zero during conversion). In this case
+            // the liquidator is able to claim the collateral without repaying any debt. Note that it's not profitable as long as liquidation
+            // gas costs are larger than the value of a single wei of the reference asset. Care should be taken though when selecting
+            // unit of account and collateral assets.
+            liqCache.yieldBalance = collateralBalance;
+            return liqCache;
+        }
+
+        uint256 maxRepayValue = liabilityValue;
+        uint256 maxYieldValue = maxRepayValue * 1e18 / discountFactor;
+
+        // Limit yield to borrower's available collateral, and reduce repay if necessary
+        // This can happen when borrower has multiple collaterals and seizing all of this one won't bring the violator back to solvency
+
+        if (collateralValue < maxYieldValue) {
+            maxRepayValue = collateralValue * discountFactor / 1e18;
+            maxYieldValue = collateralValue;
+        }
+
+        liqCache.repay = (maxRepayValue * liqCache.liability.toUint() / liabilityValue).toAssets();
+        liqCache.yieldBalance = maxYieldValue * collateralBalance / collateralValue;
+
+        return liqCache;
     }
 
 }

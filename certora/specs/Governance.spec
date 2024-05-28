@@ -104,41 +104,7 @@ use rule privilegedOperation;
 
 
 
-    //setInterestRateModel works //@audit targetInterestRate rate is not calculated propperly and fails
-    rule setInterestRateModelIntegraty(env e) {
-        address newInterestRateModel;
-        GovernanceHarness.VaultCache targetVaultCache = getVaultCacheHarness(e); ////@audit assume this works (??)
-        //check if targetVaultCache workes
-        // if so, use it to get the targetInterestRate
-        uint256 targetInterestRate = getTargetInterestRateHarness(e,newInterestRateModel, targetVaultCache);
-
-        //function call
-        setInterestRateModel(e, newInterestRateModel);
-
-        //values after
-        address interestRateModelAfter = interestRateModel();
-        uint72 interestRateAfter = getInterestRateHarness();
-
-        //--------------------------------- ASSERTS OK START ------------------------------
-            // //assert1:interest rate model is set correctly
-            // assert(interestRateModelAfter == newInterestRateModel, "Interest rate model was not set correctly");
-
-            // //asert2:if newInterestRateModel is address(0), the interes rate should be 0
-            // assert(newInterestRateModel == 0 => interestRateAfter == 0, "Interest rate should be 0");
-
-        ///------------------------------- ASSERTS OK END ------------------------------
-
-        //assert3:interest rate is updated
-        assert(interestRateAfter == assert_uint72(targetInterestRate), "Interest rate was not updated correctly");
-
-        //assert4: return of call is !(success && data.length >= 32) interest rate should be 0 
-
-
-
-        //@audit issues would be in contracts without mutations:
-        //get all values from the cache before and after
-        //if time hast not passed, then values after need to be the same as before
-    }
+   
 
     //convertFees reverts 
     rule convertFeesRevertIntegraty(env e) { //@audit-issue reverts for assert 1 becasue of summary of initOperation => spec without the summary
@@ -265,7 +231,33 @@ use rule privilegedOperation;
 
 //------------------------------- RULES OK START ------------------------------------
 
-        //only spesific functions should change HookConfig
+     //setInterestRateModel works 
+    rule setInterestRateModelIntegraty(env e) {
+        address newInterestRateModel;
+        GovernanceHarness.VaultCache targetVaultCache = getVaultCacheHarness(e);
+        uint256 ghostInterestRate = GhostCalculatedInterestRate[currentContract];
+        uint72 calculatedInterestRate = assert_uint72(calculateInterestRateHarness(e, ghostInterestRate));
+
+        //function call
+        setInterestRateModel(e, newInterestRateModel);
+
+        //values after
+        address interestRateModelAfter = interestRateModel();
+        uint72 interestRateAfter = getInterestRateHarness();
+
+        //ASSERTS
+        //assert1:interest rate model is set correctly
+        assert(interestRateModelAfter == newInterestRateModel, "Interest rate model was not set correctly");
+
+        //asert2:if newInterestRateModel is address(0), the interes rate should be 0
+        assert(newInterestRateModel == 0 => interestRateAfter == 0, "Interest rate should be 0");
+
+        //assert3:if irm != 0 interest rate is updated
+        assert(interestRateModelAfter != 0 => interestRateAfter == calculatedInterestRate, "Interest rate was not updated correctly");
+
+    }
+
+    //only spesific functions should change HookConfig
     rule onlyChangeHookConfig(env e, method f, calldataarg args) filtered{f -> !f.isView && !f.isPure && !HARNESS_FUNCTIONS(f)}{
         address hookTargetBefore;
         uint32 hookedOpsBefore;

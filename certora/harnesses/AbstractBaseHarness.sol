@@ -31,6 +31,10 @@ abstract contract AbstractBaseHarness is Base {
     function isAccountStatusCheckDeferredExt(address account) external view returns (bool) {
         return isAccountStatusCheckDeferred(account);
     }
+
+    function isInLiquidationCoolOffExt(address account) external view returns (bool) {
+        return block.timestamp < getLastAccountStatusCheckTimestamp(account) + vaultStorage.liquidationCoolOffTime;
+    }
     
     function getBalanceAndForwarderExt(address account) public returns (Shares, bool) {
         return vaultStorage.users[account].getBalanceAndBalanceForwarder();
@@ -110,6 +114,8 @@ abstract contract AbstractBaseHarness is Base {
     function useViewCallerHarness() external pure returns (address) {
         return ProxyUtils.useViewCaller();
     }
+
+    
 
 
 
