@@ -48,6 +48,7 @@ methods {
     // nondet for now, dispatch if needed
     function _.checkVaultStatus() external => NONDET;
     function _.checkAccountStatus(address) external => NONDET;
+    function _.checkAccountStatus(address,address[]) external => NONDET;
     function _.computeInterestRateView(address, uint256, uint256) external => NONDET;
 }
 
@@ -96,7 +97,7 @@ function actualCallerCheckController(env e) returns address {
         bool unused;
         // Similar to EVCAuthenticateDeferred when checkController is true.
         onBehalf, unused = evc.getCurrentOnBehalfOfAccount(e, currentContract);
-        return onBehalf; //@audit this should also return unused, oder?
+        return onBehalf;
     } else {
         return e.msg.sender;
     }

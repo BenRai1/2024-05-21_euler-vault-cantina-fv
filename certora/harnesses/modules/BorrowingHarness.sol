@@ -13,6 +13,7 @@ uint256 constant OWED_OFFSET = 112;
 contract BorrowingHarness is AbstractBaseHarness, Borrowing {
     using TypesLib for uint256;
     using AssetsLib for Assets;
+
     constructor(Integrations memory integrations) Borrowing(integrations) {}
 
     function initOperationExternal(uint32 operation, address accountToCheck)
@@ -72,11 +73,6 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
         return vaultStorage.totalBorrows;
     }
 
-    // function getNewOwedHarness(PackedUserSlot data, Owed owed) external pure returns (PackedUserSlot) {
-    //     uint256 data = PackedUserSlot.unwrap(data);
-
-    //     return PackedUserSlot.wrap((owed.toUint() << OWED_OFFSET) | (data & ~OWED_MASK));
-    // }
 
     function getUserBorrowHarness(uint256 vaultInterestAccumulator, address account) external view returns (Owed) {
         Owed prevOwed = vaultStorage.users[account].getOwed();
@@ -87,6 +83,31 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
 
     function getUserInterestAccumulatorHarness(address account) external view returns (uint256) {
         return vaultStorage.users[account].interestAccumulator;
+    }
+
+    function getCurrentOwedHarness(VaultCache memory vaultCache, address account) external view returns (Owed) {
+        Owed owed = vaultStorage.users[account].getOwed();
+        //if owed is zero, return 0
+        if (owed.isZero()) return Owed.wrap(0);
+
+        return owed.mulDiv(vaultCache.interestAccumulator, vaultStorage.users[account].interestAccumulator);
+    }
+
+    function getCurrentVaultCacheHarness() external returns (VaultCache memory){
+        VaultCache memory vaultCache;
+        (vaultCache.asset, vaultCache.oracle, vaultCache.unitOfAccount) = ProxyUtils.metadata();
+        vaultCache.lastInterestAccumulatorUpdate = vaultStorage.lastInterestAccumulatorUpdate;
+        vaultCache.cash = vaultStorage.cash;
+        vaultCache.totalBorrows = vaultStorage.totalBorrows;
+        vaultCache.totalShares = vaultStorage.totalShares;
+        vaultCache.supplyCap = vaultStorage.supplyCap.resolve();
+        vaultCache.borrowCap = vaultStorage.borrowCap.resolve();
+        vaultCache.hookedOps = vaultStorage.hookedOps;
+        vaultCache.snapshotInitialized = vaultStorage.snapshotInitialized;
+        vaultCache.accumulatedFees = vaultStorage.accumulatedFees;
+        vaultCache.configFlags = vaultStorage.configFlags;
+        vaultCache.interestAccumulator = vaultStorage.interestAccumulator;
+        return vaultCache;
     }
 
 }

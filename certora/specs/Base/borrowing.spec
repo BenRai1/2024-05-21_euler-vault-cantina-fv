@@ -1,3 +1,5 @@
+import "./abstractBase.spec";
+
 /////////////////// METHODS START ///////////////////////
 methods {
     //Harness functions
@@ -10,6 +12,8 @@ methods {
     function getTotalBorrowsHarness() external returns (BorrowingHarness.Owed) envfree;	
     // function getNewOwedHarness(BorrowingHarness.UserStorage memory self, BorrowingHarness.Owed owed) external returns (BorrowingHarness.PackedUserSlot) envfree;
     function getUserInterestAccumulatorHarness(address account) external returns (uint256) envfree;
+    function getCurrentVaultCacheHarness() external returns (BorrowingHarness.VaultCache memory) envfree;
+    function getCurrentOwedHarness(BorrowingHarness.VaultCache vaultCache, address account) external returns (BorrowingHarness.Owed) envfree;
 
 
 
@@ -18,6 +22,7 @@ methods {
 
     //Summaries
     function _.resolve(BorrowingHarness.AmountCap self) external => CVLResolve(self) expect (uint256);
+    function Cache.updateVault() internal returns (BorrowingHarness.VaultCache memory) with(env e) => CVLUpdateVault();
 
 }
 
@@ -41,6 +46,10 @@ methods {
 ///////////////// DEFINITIONS END /////////////////////
 
 ////////////////// FUNCTIONS START //////////////////////
+    function CVLUpdateVault() returns BorrowingHarness.VaultCache {
+            BorrowingHarness.VaultCache vaultCache = getCurrentVaultCacheHarness();
+            return vaultCache;
+    }
 
 ////////////////// FUNCTIONS END //////////////////////
 

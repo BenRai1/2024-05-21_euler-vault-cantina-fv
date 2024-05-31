@@ -25,8 +25,23 @@ contract LiquidationHarness is AbstractBaseHarness, Liquidation {
         address violator,
         address collateral,
         uint256 desiredRepay
-    ) external view returns (LiquidationCache memory liqCache) {
-        return calculateLiquidation(vaultCache, liquidator, violator, collateral, desiredRepay);
+    ) external view returns (        
+            address liquidatorRetunr,
+            address violatorReturn,
+            address collateralReturn,
+            address[] memory collaterals,
+            Assets liability,
+            Assets repay,
+            uint256 yieldBalance
+    ) {
+        LiquidationCache memory liquidationCache = calculateLiquidation(vaultCache, liquidator, violator, collateral, desiredRepay);
+        liquidatorRetunr = liquidationCache.liquidator;
+        violatorReturn = liquidationCache.violator;
+        collateralReturn = liquidationCache.collateral;
+        collaterals = liquidationCache.collaterals;
+        liability = liquidationCache.liability;
+        repay = liquidationCache.repay;
+        yieldBalance = liquidationCache.yieldBalance;
     }
 
     function isRecognizedCollateralExt(address collateral) external view virtual returns (bool) {
@@ -142,18 +157,26 @@ contract LiquidationHarness is AbstractBaseHarness, Liquidation {
         return vaultCache;
     }
 
-    function calculateMaxLiquidationHarness(LiquidationCache memory liqCache, VaultCache memory vaultCache)
+    function calculateMaxLiquidationHarness(
+        VaultCache memory vaultCache,
+        address violator,
+        address collateral,
+        address[] memory collaterals,
+        Assets liability,
+        Assets repay,
+        uint256 yieldBalance
+    )
         external
         view
-        returns (LiquidationCache memory)
+        returns (Assets, uint256 )
     {
         // Check account health
 
         (uint256 collateralAdjustedValue, uint256 liabilityValue) =
-            calculateLiquidity(vaultCache, liqCache.violator, liqCache.collaterals, true);
+            calculateLiquidity(vaultCache, violator, collaterals, true);
 
         // no violation
-        if (collateralAdjustedValue > liabilityValue) return liqCache;
+        if (collateralAdjustedValue > liabilityValue) return (repay,yieldBalance);
 
         // Compute discount
 
@@ -169,35 +192,27 @@ contract LiquidationHarness is AbstractBaseHarness, Liquidation {
 
         // Compute maximum yield using mid-point prices
 
-        uint256 collateralBalance = IERC20(liqCache.collateral).balanceOf(liqCache.violator);
+        uint256 collateralBalance = IERC20(collateral).balanceOf(violator);
         uint256 collateralValue =
-            vaultCache.oracle.getQuote(collateralBalance, liqCache.collateral, vaultCache.unitOfAccount);
+            vaultCache.oracle.getQuote(collateralBalance, collateral, vaultCache.unitOfAccount);
 
         if (collateralValue == 0) {
-            // Worthless collateral can be claimed with no repay. The collateral can be actually worthless, or the amount of available
-            // collateral could be non-representable in the unit of account (rounded down to zero during conversion). In this case
-            // the liquidator is able to claim the collateral without repaying any debt. Note that it's not profitable as long as liquidation
-            // gas costs are larger than the value of a single wei of the reference asset. Care should be taken though when selecting
-            // unit of account and collateral assets.
-            liqCache.yieldBalance = collateralBalance;
-            return liqCache;
+            yieldBalance = collateralBalance;
+            return (repay, yieldBalance);
         }
 
         uint256 maxRepayValue = liabilityValue;
         uint256 maxYieldValue = maxRepayValue * 1e18 / discountFactor;
-
-        // Limit yield to borrower's available collateral, and reduce repay if necessary
-        // This can happen when borrower has multiple collaterals and seizing all of this one won't bring the violator back to solvency
 
         if (collateralValue < maxYieldValue) {
             maxRepayValue = collateralValue * discountFactor / 1e18;
             maxYieldValue = collateralValue;
         }
 
-        liqCache.repay = (maxRepayValue * liqCache.liability.toUint() / liabilityValue).toAssets();
-        liqCache.yieldBalance = maxYieldValue * collateralBalance / collateralValue;
+        repay = (maxRepayValue * liability.toUint() / liabilityValue).toAssets();
+        yieldBalance = maxYieldValue * collateralBalance / collateralValue;
 
-        return liqCache;
+        return (repay, yieldBalance);
     }
 
 }

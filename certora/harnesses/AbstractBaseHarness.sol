@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import {IEVC} from "ethereum-vault-connector/interfaces/IEthereumVaultConnector.sol";
 import "../../src/EVault/shared/Base.sol";
+import "../../src/EVault/shared/types/Owed.sol";
 
 // This exists so that Base.LTVConfig and other type declarations 
 // are available in CVL and can be used across specs for different modules.
@@ -18,7 +19,8 @@ abstract contract AbstractBaseHarness is Base {
     uint256 constant OWED_OFFSET = 112;
     uint256 constant MAX_ALLOWED_INTEREST_RATE = 291867278914945094175;
 
-
+    using TypesLib for uint256;
+    using OwedLib for uint256;
 
     function getLTVConfig(address collateral) external view returns (LTVConfig memory) {
         return vaultStorage.ltvLookup[collateral];
@@ -51,6 +53,10 @@ abstract contract AbstractBaseHarness is Base {
 
     function vaultIsController(address account) external view returns (bool) {
         return IEVC(evc).isControllerEnabled(account, address(this));
+    }
+
+    function getControlersExt(address account) external view returns (address[] memory) {
+        return IEVC(evc).getControllers(account);
     }
 
     //--------------------------------------------------------------------------
@@ -113,6 +119,17 @@ abstract contract AbstractBaseHarness is Base {
 
     function useViewCallerHarness() external pure returns (address) {
         return ProxyUtils.useViewCaller();
+    }
+
+    function toAssetsUpHarness(uint256 amount) external pure returns (Assets) {
+        Owed owed = Owed.wrap(uint144(amount));
+        return owed.toAssetsUp();
+    }
+
+     function assetToOwedHarness(Assets self) external pure returns (Owed) {
+        unchecked {
+            return TypesLib.toOwed(self.toUint() << INTERNAL_DEBT_PRECISION_SHIFT);
+        }
     }
 
     

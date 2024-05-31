@@ -5,6 +5,10 @@ methods {
     function getHookTargetHarness() external returns (address) envfree;
     function useViewCallerHarness() external returns (address) envfree;
     function reentrancyLockedHarness() external returns (bool) envfree;
+    function getControlersExt(address account) external returns (address[] memory) envfree;
+    function _.balanceOf(address account) external envfree;
+    function _.toAssetsUpHarness(uint256 amount) external envfree;
+    function _.assetToOwedHarness(BorrowingHarness.Assets self) external envfree;
 
 }
 

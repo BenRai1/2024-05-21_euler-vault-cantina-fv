@@ -73,27 +73,29 @@ abstract contract BorrowUtils is Base {
     }
 
     function transferBorrow(VaultCache memory vaultCache, address from, address to, Assets assets) internal virtual {
+                                //i1:liquidate: vaultCache / from = violator / to = liquidator / asset = repay
+
         Owed amount = assets.toOwed();
 
-        (Owed fromOwed, Owed fromOwedPrev) = loadUserBorrow(vaultCache, from);
+        (Owed fromOwed, Owed fromOwedPrev) = loadUserBorrow(vaultCache, from); //i1: violator Data
 
         // If amount was rounded up, or dust is left over, transfer exact amount owed
         if (
             (amount > fromOwed && amount.subUnchecked(fromOwed).isDust())
                 || (amount < fromOwed && fromOwed.subUnchecked(amount).isDust())
         ) {
-            amount = fromOwed;
+            amount = fromOwed; //i1: amount to repay
         }
 
         if (amount > fromOwed) revert E_InsufficientDebt();
 
         fromOwed = fromOwed.subUnchecked(amount);
-        setUserBorrow(vaultCache, from, fromOwed);
+        setUserBorrow(vaultCache, from, fromOwed); //i1: update the stats of the violator 
 
-        (Owed toOwed, Owed toOwedPrev) = loadUserBorrow(vaultCache, to);
+        (Owed toOwed, Owed toOwedPrev) = loadUserBorrow(vaultCache, to); //i1: get the stats of the liquidator 
 
         toOwed = toOwed + amount;
-        setUserBorrow(vaultCache, to, toOwed);
+        setUserBorrow(vaultCache, to, toOwed); //i1: update the stats of the liquidator
 
         logRepay(from, assets, fromOwedPrev.toAssetsUp(), fromOwed.toAssetsUp());
 

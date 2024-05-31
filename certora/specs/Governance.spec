@@ -61,20 +61,186 @@ use rule privilegedOperation;
     }
 
     // getting caps works
+    rule getCapsIntegraty(env e) {
+        uint16 supplyCap = Governance.vaultStorage.supplyCap;
+        uint16 borrowCap = Governance.vaultStorage.borrowCap;
+
+        //function call
+        uint16 supplyCapCall;
+        uint16 borrowCapCall;
+        (supplyCapCall, borrowCapCall) = caps();
+
+        assert(supplyCapCall == supplyCap && borrowCapCall == borrowCap, "Caps were not returned correctly");
+    }
+
     // getting configFlags works
-    // getting EVC works
+    rule getConfigFlagsIntegraty(env e) {
+        uint32 configFlags = Governance.vaultStorage.configFlags;
+        
+        //function call
+        uint32 configFlagsCall = configFlags();
+
+        assert(configFlagsCall == configFlags, "Config flags were not returned correctly");
+    }
+
+    // getting EVC works 
+    rule getEVCIntegraty(env e) {
+        address EVC = EVCHarness(e);
+
+        //function call
+        address EVCCall = EVC();
+
+        assert(EVCCall == EVC, "EVC was not returned correctly");
+    }
+
     // getting hookConfig works
+    rule getHookConfigIntegraty(env e) {
+        address hookTarget = Governance.vaultStorage.hookTarget;
+        uint32 hookedOps = Governance.vaultStorage.hookedOps;
+
+        //function call
+        address hookTargetCall;
+        uint32 hookedOpsCall;
+        (hookTargetCall, hookedOpsCall) = hookConfig();
+
+        assert(hookTargetCall == hookTarget && hookedOpsCall == hookedOps, "Hook config was not returned correctly");
+    }
+
     // getting liquidationCoolOffTime works
+    rule getLiquidationCoolOffTimeIntegraty(env e) {
+        uint16 liquidationCoolOffTime = Governance.vaultStorage.liquidationCoolOffTime;
+
+        //function call
+        uint16 liquidationCoolOffTimeCall = liquidationCoolOffTime();
+
+        assert(liquidationCoolOffTimeCall == liquidationCoolOffTime, "Liquidation cool off time was not returned correctly");
+    }
+
     // getting LTVBorrow(address) works
+    rule getLTVBorrowIntegraty(env e) {
+        address collateral;
+        uint16 borrowLTV = Governance.vaultStorage.ltvLookup[collateral].borrowLTV; 
+
+        //function call
+        uint16 borrowLTVCall = LTVBorrow(e,collateral);
+
+        assert(borrowLTVCall == borrowLTV, "Borrow LTV was not returned correctly");
+    }
+
     // getting LTVFull(address) works
-    // getting LTVLiquidation(address) works
+    rule getLTVFullIntegraty(env e) {
+        address collateral;
+        uint16 borrowLTV = Governance.vaultStorage.ltvLookup[collateral].borrowLTV;
+        uint16 liquidationLTV = Governance.vaultStorage.ltvLookup[collateral].liquidationLTV;
+        uint16 initialLiquidationLTV = Governance.vaultStorage.ltvLookup[collateral].initialLiquidationLTV;
+        uint48 targetTimestamp = Governance.vaultStorage.ltvLookup[collateral].targetTimestamp;
+        uint32 rampDuration = Governance.vaultStorage.ltvLookup[collateral].rampDuration;
+
+        //function call
+        uint16 borrowLTVCall;
+        uint16 liquidationLTVCall;
+        uint16 initialLiquidationLTVCall;
+        uint48 targetTimestampCall;
+        uint32 rampDurationCall;
+        (borrowLTVCall, liquidationLTVCall, initialLiquidationLTVCall, targetTimestampCall, rampDurationCall) = LTVFull(collateral);
+
+        assert(borrowLTVCall == borrowLTV && liquidationLTVCall == liquidationLTV && initialLiquidationLTVCall == initialLiquidationLTV && targetTimestampCall == targetTimestamp && rampDurationCall == rampDuration, "LTV values were not returned correctly");
+    }
+
+    // getting LTVLiquidation(address) works //@audit does not work
+    // rule getLTVLiquidationIntegraty(env e) {
+    //     address collateral;
+    //     GovernanceHarness.LTVConfig ltvLookup = Governance.vaultStorage.ltvLookup[collateral];
+    //     uint16 liquidationLTV = getLTVTrueHarness(e, ltvLookup );
+
+    //     //function call
+    //     uint16 liquidationLTVCall = LTVLiquidation(e, collateral);
+
+    //     assert(liquidationLTVCall == liquidationLTV, "Liquidation LTV was not returned correctly");
+    // }
+
     // getting LTVList works
+    rule getLTVListIntegraty(env e) {
+        address[] LTVList = LTVListHarness(e);
+
+        //function call
+        address[] LTVListCall = LTVList();
+        uint256 i = LTVListCall.length;
+
+        assert(LTVListCall[i] == LTVList[i], "LTV list was not returned correctly");
+    }
+
     // getting maxLiquidationDiscount works
-    // getting oracle works
+    rule getMaxLiquidationDiscountIntegraty(env e) {
+        uint16 maxLiquidationDiscount = Governance.vaultStorage.maxLiquidationDiscount;
+
+        //function call
+        uint16 maxLiquidationDiscountCall = maxLiquidationDiscount();
+
+        assert(maxLiquidationDiscountCall == maxLiquidationDiscount, "Max liquidation discount was not returned correctly");
+    }
+
+    // getting oracle works 
+    rule getOracleIntegraty(env e) {
+        address oracle = oracleHarness(e);
+
+        //function call
+        address oracleCall = oracle();
+
+        assert(oracleCall == oracle, "Oracle was not returned correctly");
+    }
+
     // getting permit2Address works
+    rule getPermit2AddressIntegraty(env e) {
+        address permit2Address = Governance.permit2;
+
+        //function call
+        address permit2AddressCall = permit2Address();
+
+        assert(permit2AddressCall == permit2Address, "Permit2 address was not returned correctly");
+    }
+
     // getting protocolConfigAddress works
+    rule getProtocolConfigAddressIntegraty(env e) {
+        address protocolConfigAddress = Governance.protocolConfig;
+
+        //function call
+        address protocolConfigAddressCall = protocolConfigAddress();
+
+        assert(protocolConfigAddressCall == protocolConfigAddress, "Protocol config address was not returned correctly");
+    }
+
     // getting protocolFeeReceiver works
+    rule getProtocolFeeReceiverIntegraty(env e) {
+        bool exist = ProtocolConfig._protocolFeeConfig[currentContract].exists;
+        address protocolFeeReceiver;
+        if(exist){
+            protocolFeeReceiver = ProtocolConfig._protocolFeeConfig[currentContract].feeReceiver;
+        }else{
+            protocolFeeReceiver = 0;
+        }
+
+        //function call
+        address protocolFeeReceiverCall = protocolFeeReceiver();
+
+        assert(protocolFeeReceiverCall == protocolFeeReceiver, "Protocol fee receiver was not returned correctly");
+    }
+
     // getting protocolFeeShare works
+    rule getProtocolFeeShareIntegraty(env e) {
+        bool exist = ProtocolConfig._protocolFeeConfig[currentContract].exists;
+        uint16 protocolFeeShare;
+        if(exist){
+            protocolFeeShare = ProtocolConfig._protocolFeeConfig[currentContract].protocolFeeShare;
+        } else {
+            protocolFeeShare = 0;
+        }
+
+        //function call
+        uint256 protocolFeeShareCall = protocolFeeShare();
+
+        assert(to_mathint(protocolFeeShareCall) == to_mathint(protocolFeeShare), "Protocol fee share was not returned correctly");
+    }
 
 
 
@@ -144,69 +310,7 @@ use rule privilegedOperation;
         assert(vaultCacheBefore.accumulatedFees != 0 && protocolReceiver == 0 && protocolFee != 0 => reverted, "Protocol receiver is 0");
     }
 
-    //setLTV works //@audit checking the final values does not work becasue the State is still HAVOC https://prover.certora.com/output/8418/8704acbf970745d48b8a36270f527f22/?anonymousKey=978dcc2b6dce63ce294f88c72039f62b81533215
-        rule setLTVIntegraty(env e) {
-            address collateral;
-            require(collateral != 0);
-            uint16 borrowLTV;
-            GovernanceHarness.ConfigAmount newBorrowLTV = toConfigAmountHarness(borrowLTV);
-            uint16 liquidationLTV;
-            GovernanceHarness.ConfigAmount newLiquidationLTV = toConfigAmountHarness(liquidationLTV);
-            uint32 rampDuration;
 
-            //VALUES BEFORE
-            GovernanceHarness.LTVConfig ltvConfigBefore = getCurrentLTVConfigHarness(collateral); 
-            bool isInitialized = ltvConfigBefore.initialized;
-            GovernanceHarness.ConfigAmount currentTvlBefore = calculateLiquidationLTVHarness(e, ltvConfigBefore, true);
-            uint256 nuberOfLTVsBefore = LTVList().length;
-
-
-
-            //FUNCTION CALL
-            setLTV(e, collateral, borrowLTV, liquidationLTV, rampDuration);
-            
-
-            //VALUES AFTER
-            GovernanceHarness.LTVConfig LTVConfigAfter = getCurrentLTVConfigHarness(collateral);
-            uint256 nuberOfLTVsAfter = LTVList().length;
-
-            //maybe try this
-            //LTV values after
-            // uint16 borrowLTVAfter;
-            // uint16 liquidationLTVAfter;
-            // uint16 initialLiquidationLTVAfter;
-            // uint48 targetTimestampAfter;
-            // uint32 rampDurationAfter;
-            // (borrowLTVAfter, liquidationLTVAfter, initialLiquidationLTVAfter, targetTimestampAfter, rampDurationAfter) = LTVFull(collateral);
-
-
-
-            //ASSERTS
-            // //assert1: borrowLTVAfter = newBorrowLTV 
-            // assert(LTVConfigAfter.borrowLTV == newBorrowLTV, "Borrow LTV was not set correctly");
-
-            // //assert2: liquidationLTVAfter = liquidationLTV
-            // assert(LTVConfigAfter.liquidationLTV == newLiquidationLTV, "Liquidation LTV was not set correctly");
-
-            // //assert3: initialLiquidationLTVAfter = ???
-            // assert(LTVConfigAfter.initialLiquidationLTV == currentTvlBefore, "Initial liquidation LTV was not set correctly");
-
-            // //assert4: targetTimestampAfter = e.block.timestamp + rampDuration
-            // assert(LTVConfigAfter.targetTimestamp == assert_uint48(e.block.timestamp + rampDuration), "Target timestamp was not set correctly");
-
-            // //assert5: rampDurationAfter = rampDuration
-            // assert(LTVConfigAfter.rampDuration == rampDuration, "Ramp duration was not set correctly");
-
-            // //assert6: currentLtvConfigAfter.initialized = true
-            // assert(LTVConfigAfter.initialized == true, "Initialized was not set correctly");
-
-            //--------------------------------- ASSERTS OK START ------------------------------
-            
-                // //assert7: if !initailized, the LTV is added to the LTVList
-                assert(!isInitialized => nuberOfLTVsAfter ==  assert_uint256(nuberOfLTVsBefore +1), "Uninitalized LTV is not added to the ltvList");
-
-            //--------------------------------- ASSERTS OK END ------------------------------
-        }
    
 
 
@@ -227,9 +331,57 @@ use rule privilegedOperation;
 
 
 
-//------------------------------- RULES PROBLEMS START ----------------------------------
+//------------------------------- RULES PROBLEMS END ----------------------------------
 
 //------------------------------- RULES OK START ------------------------------------
+
+    //setLTV works 
+    rule setLTVIntegratyCF2(env e) {
+        address collateral;
+        require(collateral != 0);
+        uint16 borrowLTV;
+        GovernanceHarness.ConfigAmount newBorrowLTV = toConfigAmountHarness(borrowLTV);
+        uint16 liquidationLTV;
+        GovernanceHarness.ConfigAmount newLiquidationLTV = toConfigAmountHarness(liquidationLTV);
+        uint32 rampDuration;
+        require(e.block.timestamp + rampDuration <=max_uint48);
+
+        //VALUES BEFORE
+        GovernanceHarness.LTVConfig ltvConfigBefore = getCurrentLTVConfigHarness(collateral); 
+        bool isInitialized = ltvConfigBefore.initialized;
+        GovernanceHarness.ConfigAmount currentTvlBefore = calculateLiquidationLTVHarness(e, ltvConfigBefore, true);
+        uint256 nuberOfLTVsBefore = LTVList().length;
+
+        //FUNCTION CALL
+        setLTV(e, collateral, borrowLTV, liquidationLTV, rampDuration);
+
+        //VALUES AFTER
+        GovernanceHarness.LTVConfig LTVConfigAfter = getCurrentLTVConfigHarness(collateral);
+        uint256 nuberOfLTVsAfter = LTVList().length;
+
+        //ASSERTS
+        //assert1: borrowLTVAfter = newBorrowLTV 
+        assert(LTVConfigAfter.borrowLTV == newBorrowLTV, "Borrow LTV was not set correctly");
+
+        //assert2: liquidationLTVAfter = liquidationLTV
+        assert(LTVConfigAfter.liquidationLTV == newLiquidationLTV, "Liquidation LTV was not set correctly");
+
+        //assert3: initialLiquidationLTVAfter = ???
+        assert(LTVConfigAfter.initialLiquidationLTV == currentTvlBefore, "Initial liquidation LTV was not set correctly");
+
+        //assert4: targetTimestampAfter = e.block.timestamp + rampDuration
+        assert(LTVConfigAfter.targetTimestamp == assert_uint48(e.block.timestamp + rampDuration), "Target timestamp was not set correctly");
+
+        //assert5: rampDurationAfter = rampDuration
+        assert(LTVConfigAfter.rampDuration == rampDuration, "Ramp duration was not set correctly");
+
+        //assert6: currentLtvConfigAfter.initialized = true
+        assert(LTVConfigAfter.initialized == true, "Initialized was not set correctly");
+
+        
+        // //assert7: if !initailized, the LTV is added to the LTVList
+        assert(!isInitialized => nuberOfLTVsAfter ==  assert_uint256(nuberOfLTVsBefore +1), "Uninitalized LTV is not added to the ltvList");
+    }
 
      //setInterestRateModel works 
     rule setInterestRateModelIntegraty(env e) {

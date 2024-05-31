@@ -53,7 +53,13 @@ use builtin rule sanity;
 //------------------------------- RULES PROBLEMS START ----------------------------------
 
 
-    //only spesific functions should change snapshot //@audit checkAccountStatus is Havoking all variables => changes snapshot (_.checkAccountStatus(address) external => DISPATCHER(true); does not work)
+
+
+//------------------------------- RULES PROBLEMS START ----------------------------------
+
+//------------------------------- RULES OK START ------------------------------------
+
+    //only spesific functions should change snapshot 
     rule onlyChangeSnapshot(env e, method f, calldataarg arg) filtered{f->
         !f.isView && !f.isPure && !BASE_HARNESS_FUNCTIONS(f) && !HARNESSES_FUNCTIONS(f)}{
         //VALUES BEFORE
@@ -70,10 +76,6 @@ use builtin rule sanity;
         //assert1: if snapshotBefore != snapshotAfter, the called function should be checkVaultStatus
         assert(snapshotBefore != snapshotAfter => f.selector == sig:checkVaultStatus().selector, "Function should be checkVaultStatus"); 
     }
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-//------------------------------- RULES OK START ------------------------------------
 
     //only spesific functions should change if the controller is enabled
     rule onlyChangeDisableController(env e, method f, calldataarg arg) filtered{f->

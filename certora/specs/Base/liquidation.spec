@@ -1,4 +1,6 @@
 import "../Base.spec";
+import "./abstractBase.spec";
+
 /////////////////// METHODS START ///////////////////////
 methods {
     function isRecognizedCollateralExt(address collateral) external returns (bool) envfree;
@@ -6,7 +8,7 @@ methods {
 
     //Function summaries
     function Cache.loadVault() internal returns (LiquidationHarness.VaultCache memory) with(env e) => CVLLoadVault();
-    //@audit summarize the private function to go to a CVL function which does the same => Call the CVL function to get the results so it can be checked
+    function Cache.updateVault() internal returns (LiquidationHarness.VaultCache memory) with(env e) => CVLUpdateVault();
 }
 
 /////////////////// METHODS END ///////////////////////
@@ -17,6 +19,11 @@ methods {
 
 ////////////////// FUNCTIONS START //////////////////////
     function CVLLoadVault() returns LiquidationHarness.VaultCache {
+            LiquidationHarness.VaultCache vaultCache = getCurrentVaultCacheHarness();
+            return vaultCache;
+    }
+
+    function CVLUpdateVault() returns LiquidationHarness.VaultCache {
             LiquidationHarness.VaultCache vaultCache = getCurrentVaultCacheHarness();
             return vaultCache;
     }

@@ -1,3 +1,5 @@
+import "./abstractBase.spec";
+
 /////////////////// METHODS START ///////////////////////
 
 
@@ -59,9 +61,15 @@
             require_uint32(timeRemaining) < ltvConfig.rampDuration;
     }
 
+
 ////////////////// FUNCTIONS END //////////////////////
 
 ///////////////// GHOSTS & HOOKS START //////////////////
+// This is not in the scene for this config, so we just want it to be
+// an uninterpreted function rather than NONDET so that
+// we get the same value when this is called for different parts
+ghost CVLgetCurrentOnBehalfOfAccountAddr(address) returns address;
+ghost CVLgetCurrentOnBehalfOfAccountBool(address) returns bool;
 
 ///////////////// GHOSTS & HOOKS END //////////////////
 

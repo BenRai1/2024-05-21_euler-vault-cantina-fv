@@ -43,15 +43,16 @@ abstract contract LiquidationModule is ILiquidation, BalanceUtils, LiquidityUtil
     }
 
     /// @inheritdoc ILiquidation
-    function liquidate(address violator, address collateral, uint256 repayAssets, uint256 minYieldBalance)
+    function liquidate(address violator, address collateral, uint256 repayAssets, uint256 minYieldBalance) //@audit-check why is this the case?: liquidation does not mean repayment of the debt but only moving the debt to the liquidator
         public
         virtual
         nonReentrant
     {
-        (VaultCache memory vaultCache, address liquidator) = initOperation(OP_LIQUIDATE, CHECKACCOUNT_CALLER);
+        (VaultCache memory vaultCache, address liquidator) = initOperation(OP_LIQUIDATE, CHECKACCOUNT_CALLER); //i: liquidator can only liquidate from vaults which they themselves have as controllers because liquidation just means that the debt is moved from the violator to the liquidator
+        //@audit-check how to make a vault controller if you do not borrow from it?    
 
         LiquidationCache memory liqCache =
-            calculateLiquidation(vaultCache, liquidator, violator, collateral, repayAssets);
+            calculateLiquidation(vaultCache, liquidator, violator, collateral, repayAssets); 
 
         executeLiquidation(vaultCache, liqCache, minYieldBalance);
     }

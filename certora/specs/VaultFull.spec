@@ -1,42 +1,21 @@
 import "./Base.spec";
 import "./GhostPow.spec";
 import "./LoadVaultSummaries.spec";
-import"./Base/vault.spec";
+import "./Base/vault.spec";
+
+/*
+    Declaration of methods that are used in the rules. envfree indicate that
+    the method is not dependent on the environment (msg.value, msg.sender).
+    Methods that are not declared here are assumed to be dependent on env.
+*/
+
 
 // used to test running time
 use builtin rule sanity;
-use rule privilegedOperation; //@audit-issue what is this? Check it since it fails for every file
-
 
 ////////////////////////////////////////////////////////////////////////////////
 ////           #  asset To shares mathematical properties                  /////
 ////////////////////////////////////////////////////////////////////////////////
-
-
-//------------------------------- RULES TEST START ----------------------------------
-
-//------------------------------- RULES TEST END ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-//------------------------------- RULES OK START ------------------------------------
-
-//------------------------------- RULES OK END ------------------------------------
-
-//------------------------------- INVARIENTS OK START-------------------------------
-
-//------------------------------- INVARIENTS OK END-------------------------------
-
-//------------------------------- ISSUES OK START-------------------------------
-
-//------------------------------- ISSUES OK END-------------------------------
-
-//------------------------------- OLD RULES START-------------------------------
-
-
-
 
 rule conversionOfZero {
     env e;
@@ -133,8 +112,11 @@ invariant assetsMoreThanSupply(env e)
     {
         preserved {
             require e.msg.sender != currentContract;
+            require actualCaller(e) != currentContract;
+            require actualCallerCheckController(e) != currentContract;
             address any;
-            safeAssumptions(e, any , e.msg.sender);
+            safeAssumptions(e, any , actualCaller(e));
+            safeAssumptions(e, any , actualCallerCheckController(e));
         }
     }
 
@@ -149,13 +131,13 @@ invariant noSupplyIfNoAssets(env e)
 
 
 invariant noAssetsIfNoSupply(env e) 
-   ( userAssets(e, currentContract) == 0 => totalSupply(e) == 0 ) &&
     ( totalAssets(e) == 0 => ( totalSupply(e) == 0 ))
 
     {
         preserved {
-        address any;
-            safeAssumptions(e, any, e.msg.sender);
+            address any;
+            safeAssumptions(e, any, actualCaller(e));
+            safeAssumptions(e, any, actualCallerCheckController(e));
         }
     }
 
@@ -224,12 +206,13 @@ rule dustFavorsTheHouse(uint assetsIn )
 ////                       #   Risk Analysis                           /////////
 ////////////////////////////////////////////////////////////////////////////////
 
-// doesn't pass but should be implemented
 invariant vaultSolvency(env e)
-    totalAssets(e) >= totalSupply(e)  && userAssets(e, currentContract) >= totalAssets(e)  {
+    totalAssets(e) >= totalSupply(e)  && userAssets(e, currentContract) >= require_uint256(cache_cash(e))  {
       preserved {
             requireInvariant totalSupplyIsSumOfBalances(e);
             require e.msg.sender != currentContract;
+            require actualCaller(e) != currentContract;
+            require actualCallerCheckController(e) != currentContract;
             require currentContract != asset(); 
         }
     }

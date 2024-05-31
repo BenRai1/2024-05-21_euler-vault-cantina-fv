@@ -186,6 +186,38 @@ contract GovernanceHarness is Governance, AbstractBaseHarness {
         else finalInterestRate = newInterestRate;
     }
 
+    function oracleHarness() external returns (address) {
+        (, IPriceOracle _oracle,) = ProxyUtils.metadata();
+        return address(_oracle);
+    }
+
+    function LTVListHarness() external view returns (address[] memory) {
+        return vaultStorage.ltvList;
+    }
+
+    function EVCHarness() public view returns (address) {
+        return address(evc);
+    }
+
+    function getLTVTrueHarness(LTVConfig memory self)internal view returns (ConfigAmount) {
+        if (block.timestamp >= self.targetTimestamp || self.liquidationLTV >= self.initialLiquidationLTV) {
+            return self.liquidationLTV;
+        }
+
+        uint256 currentLiquidationLTV = self.initialLiquidationLTV.toUint16();
+
+        unchecked {
+            uint256 targetLiquidationLTV = self.liquidationLTV.toUint16();
+            uint256 timeRemaining = self.targetTimestamp - block.timestamp;
+
+            // targetLiquidationLTV < initialLiquidationLTV and timeRemaining <= rampDuration
+            currentLiquidationLTV = targetLiquidationLTV
+                + (currentLiquidationLTV - targetLiquidationLTV) * timeRemaining / self.rampDuration;
+        }
+
+        // because ramping happens only when liquidation LTV decreases, it's safe to down-cast the new value
+        return ConfigAmount.wrap(uint16(currentLiquidationLTV));
+    }
     
 
 
