@@ -10,6 +10,7 @@ uint256 constant SHARES_MASK = 0x000000000000000000000000000000000000FFFFFFFFFFF
 uint256 constant OWED_MASK = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000000000000000;
 uint256 constant OWED_OFFSET = 112;
 
+
 contract BorrowingHarness is AbstractBaseHarness, Borrowing {
     using TypesLib for uint256;
     using AssetsLib for Assets;
@@ -108,6 +109,27 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
         vaultCache.configFlags = vaultStorage.configFlags;
         vaultCache.interestAccumulator = vaultStorage.interestAccumulator;
         return vaultCache;
+    }
+
+    function loadUserBorrowHarness(VaultCache calldata vaultCache, address account) external returns (Owed, Owed) {
+        Owed prevOwed = vaultStorage.users[account].getOwed();
+        Owed newOwed = getCurrentOwed(vaultCache, account, prevOwed);
+        if (prevOwed.isZero()){
+            newOwed =  Owed.wrap(0);
+        } else {
+            newOwed = prevOwed.mulDiv(vaultCache.interestAccumulator, vaultStorage.users[account].interestAccumulator);
+        }
+        return (newOwed, prevOwed);
+    }
+
+    function finalAmountDustHarness(Owed amount, Owed currentOwed) external pure returns (Owed) {
+        if (
+            (amount > currentOwed && amount.subUnchecked(currentOwed).isDust())
+                || (amount < currentOwed && currentOwed.subUnchecked(amount).isDust())
+        ) {
+            return currentOwed;
+        } 
+        return amount;  
     }
 
 }

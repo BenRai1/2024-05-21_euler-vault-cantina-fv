@@ -14,6 +14,7 @@ methods {
     function getUserInterestAccumulatorHarness(address account) external returns (uint256) envfree;
     function getCurrentVaultCacheHarness() external returns (BorrowingHarness.VaultCache memory) envfree;
     function getCurrentOwedHarness(BorrowingHarness.VaultCache vaultCache, address account) external returns (BorrowingHarness.Owed) envfree;
+    function loadUserBorrowHarness(BorrowingHarness.VaultCache vaultCache, address account) external returns (BorrowingHarness.Owed, BorrowingHarness.Owed) envfree;
 
 
 
@@ -23,6 +24,16 @@ methods {
     //Summaries
     function _.resolve(BorrowingHarness.AmountCap self) external => CVLResolve(self) expect (uint256);
     function Cache.updateVault() internal returns (BorrowingHarness.VaultCache memory) with(env e) => CVLUpdateVault();
+
+    //Summary of bowowValues
+    //getCurrentOwed(vaultCache, from) from BorrowingUtils 
+    //@audit current is previous owed
+    function _.getCurrentOwed(BorrowingHarness.VaultCache memory vaultCache, address account) internal => CVLGetCurrentOwed( account) expect (BorrowingHarness.Owed);
+    //loadUserBorrow(vaultCache, from) from BorrowingUtils
+    function _.loadUserBorrow(BorrowingHarness.VaultCache memory vaultCache, address account) internal => CVLLoadUserBorrow(vaultCache, account) expect (BorrowingHarness.Owed, BorrowingHarness.Owed);
+    //setUserBorrow(vaultCache, to, toOwed) from BorrowingUtils
+    function _.setUserBorrow(BorrowingHarness.VaultCache memory vaultCache, address account, BorrowingHarness.Owed newOwed) internal => CVLSetUserBorrow(vaultCache, account, newOwed) expect void;
+
 
 }
 
@@ -51,9 +62,28 @@ methods {
             return vaultCache;
     }
 
+    function CVLGetCurrentOwed(address account) returns BorrowingHarness.Owed {
+        return owedGhost[account];
+
+    }
+
+    function CVLLoadUserBorrow(BorrowingHarness.VaultCache vaultCache, address account) returns (BorrowingHarness.Owed, BorrowingHarness.Owed){
+        return (owedGhost[account], owedGhost[account]);
+    }
+
+    function CVLSetUserBorrow(BorrowingHarness.VaultCache vaultCache, address account, BorrowingHarness.Owed newOwed){
+        owedGhost[account] = newOwed;
+        interestAccumulatorsGhost[account] = vaultCache.interestAccumulator;
+    }
+
 ////////////////// FUNCTIONS END //////////////////////
 
 ///////////////// GHOSTS & HOOKS START //////////////////
+
+//ghost borrows
+ghost mapping(address => BorrowingHarness.Owed) owedGhost;
+ghost mapping(address =>  uint256) interestAccumulatorsGhost;
+
 
 //ghost Caps
 

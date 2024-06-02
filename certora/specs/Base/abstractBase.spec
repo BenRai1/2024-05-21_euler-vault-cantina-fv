@@ -7,8 +7,11 @@ methods {
     function reentrancyLockedHarness() external returns (bool) envfree;
     function getControlersExt(address account) external returns (address[] memory) envfree;
     function _.balanceOf(address account) external envfree;
-    function _.toAssetsUpHarness(uint256 amount) external envfree;
+    function _.uintToAssetsUpHarness(uint256 amount) external envfree;
     function _.assetToOwedHarness(BorrowingHarness.Assets self) external envfree;
+    function finalAmountDustHarness(BorrowingHarness.Owed amount, BorrowingHarness.Owed currentOwed) external returns (BorrowingHarness.Owed) envfree;
+    function isNotSetCompatibeAssetHarness(BorrowingHarness.Flags self) external returns (bool) envfree;
+    function isKnownNonOwnerAccountHarness(address account) external returns (bool) envfree;
 
 }
 

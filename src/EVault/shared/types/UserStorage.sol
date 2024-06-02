@@ -56,8 +56,8 @@ library UserStorageLib {
         uint256 data = PackedUserSlot.unwrap(self.data);
 
         self.data = PackedUserSlot.wrap((owed.toUint() << OWED_OFFSET) | (data & ~OWED_MASK));
-    }
-
+    }//i: ~ => bitwise NOT
+ 
     function setBalance(UserStorage storage self, Shares balance) internal {
         uint256 data = PackedUserSlot.unwrap(self.data);
 

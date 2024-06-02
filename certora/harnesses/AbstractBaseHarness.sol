@@ -18,6 +18,8 @@ abstract contract AbstractBaseHarness is Base {
     uint256 constant SHARES_MASK = 0x000000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFF;
     uint256 constant OWED_OFFSET = 112;
     uint256 constant MAX_ALLOWED_INTEREST_RATE = 291867278914945094175;
+    uint32 constant CFG_EVC_COMPATIBLE_ASSET = 1 << 1;
+
 
     using TypesLib for uint256;
     using OwedLib for uint256;
@@ -121,16 +123,62 @@ abstract contract AbstractBaseHarness is Base {
         return ProxyUtils.useViewCaller();
     }
 
-    function toAssetsUpHarness(uint256 amount) external pure returns (Assets) {
+
+    //--------------------------------------------------------------------------
+    // Transformations uint, Owed, Assets
+    //--------------------------------------------------------------------------
+
+    ///////////////////////////// TO ASSETS //////////////////////////////////////
+
+    function uintToAssetsHarness(uint256 amount) external pure returns (Assets) {
+        return amount.toAssets();
+    }
+    function uintToAssetsUpHarness(uint256 amount) external pure returns (Assets) {
         Owed owed = Owed.wrap(uint144(amount));
         return owed.toAssetsUp();
     }
 
-     function assetToOwedHarness(Assets self) external pure returns (Owed) {
+    function unitToAssetsHarness(uint256 amount) external pure returns (Assets) {
+        if (amount > MAX_SANE_AMOUNT) revert Errors.E_AmountTooLargeToEncode();
+        return Assets.wrap(uint112(amount));
+    }
+
+    function owedToAssetsUpHarness(Owed amount) external pure returns (Assets) {
+        return amount.toAssetsUp();
+    }
+
+    ///////////////////////////// TO OWED //////////////////////////////////////
+
+    function assetToOwedHarness(Assets self) external pure returns (Owed) {
         unchecked {
             return TypesLib.toOwed(self.toUint() << INTERNAL_DEBT_PRECISION_SHIFT);
         }
     }
+
+
+    function uintToOwedHarness(uint256 amount) external pure returns (Owed) {
+        return Owed.wrap(uint144(amount));
+    }
+
+    function subUncheckedHarness(Owed a, Owed b) external pure returns (Owed) {
+        return Owed.wrap(uint144(a.toUint() - b.toUint()));
+        //i:turn Owed to uint256, substract them, turn back to Owed
+    }
+
+    function addUncheckedHarness(Owed a, Owed b) external pure returns (Owed) {
+        return Owed.wrap(uint144(a.toUint() + b.toUint()));
+        //i:turn Owed to uint256, add them, turn back to Owed 
+    }
+
+    function isNotSetCompatibeAssetHarness(Flags self) external pure returns (bool) {
+        return self.isNotSet(CFG_EVC_COMPATIBLE_ASSET);
+    }
+
+    function isKnownNonOwnerAccountHarness(address account) external view returns (bool) {
+        return isKnownNonOwnerAccount(account);
+    }
+
+    
 
     
 
