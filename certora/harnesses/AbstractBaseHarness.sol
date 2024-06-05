@@ -147,6 +147,10 @@ abstract contract AbstractBaseHarness is Base {
         return amount.toAssetsUp();
     }
 
+    function sharesToAssetsDownHarness(Shares amount, VaultCache memory vaultCache) external pure returns (Assets) {
+        return amount.toAssetsDown(vaultCache);
+    }
+
     ///////////////////////////// TO OWED //////////////////////////////////////
 
     function assetToOwedHarness(Assets self) external pure returns (Owed) {
@@ -154,7 +158,6 @@ abstract contract AbstractBaseHarness is Base {
             return TypesLib.toOwed(self.toUint() << INTERNAL_DEBT_PRECISION_SHIFT);
         }
     }
-
 
     function uintToOwedHarness(uint256 amount) external pure returns (Owed) {
         return Owed.wrap(uint144(amount));
@@ -168,6 +171,12 @@ abstract contract AbstractBaseHarness is Base {
     function addUncheckedHarness(Owed a, Owed b) external pure returns (Owed) {
         return Owed.wrap(uint144(a.toUint() + b.toUint()));
         //i:turn Owed to uint256, add them, turn back to Owed 
+    }
+
+    ///////////////////////////// TO SHARES //////////////////////////////////////
+
+    function assetsToSharesUpHarness(Assets self, VaultCache memory vaultCache) external pure returns (Shares) {
+        return self.toSharesUp(vaultCache);
     }
 
     function isNotSetCompatibeAssetHarness(Flags self) external pure returns (bool) {

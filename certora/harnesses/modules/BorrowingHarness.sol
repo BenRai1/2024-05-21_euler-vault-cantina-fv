@@ -132,4 +132,32 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
         return amount;  
     }
 
+    function repayWithSharesCalculationHarness(
+        uint256 amount, Shares sharesOnBehalf, VaultCache calldata vaultCache, Assets OwedReceiverAsAssets) external returns (Assets assets, Shares shares) {
+        if (amount == type(uint256).max) {
+            shares = sharesOnBehalf;
+            assets = shares.toAssetsDown(vaultCache);
+        } else {
+            shares = assets.toSharesUp(vaultCache);
+            assets = amount.toAssets();
+        }
+
+        if (assets.isZero()) {
+            assets = Assets.wrap(0);
+            shares = Shares.wrap(0);
+            return (assets, shares);
+        }
+
+        if (assets > OwedReceiverAsAssets) {
+            assets = OwedReceiverAsAssets;
+            shares = assets.toSharesUp(vaultCache);
+        }
+    }
+
+    function getBalanceAndBalanceForwarderHarness(UserStorage storage userStorage) internal view returns (Shares, bool) {
+        return  (Shares.wrap(0), false); //@audit make this right
+    }
+
+    
+
 }

@@ -5,8 +5,10 @@ import "../../../src/interfaces/IPriceOracle.sol";
 import {ERC20} from "../../../lib/ethereum-vault-connector/lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "../AbstractBaseHarness.sol";
 import "../../../src/EVault/modules/Liquidation.sol";
+// import "../AbstractBaseHarness.sol";
 
 contract LiquidationHarness is AbstractBaseHarness, Liquidation {
+    uint32 constant CFG_DONT_SOCIALIZE_DEBT = 1 << 0;
 
 
     using TypesLib for uint16;
@@ -213,6 +215,18 @@ contract LiquidationHarness is AbstractBaseHarness, Liquidation {
         yieldBalance = maxYieldValue * collateralBalance / collateralValue;
 
         return (repay, yieldBalance);
+    }
+
+    function getValueCollateralExt(uint256 collateralBalance, address collateral, address oracle, address unitOfAccount) external view returns (uint256) {
+        return IPriceOracle(collateral).getQuote(collateralBalance, collateral, unitOfAccount);
+    }
+
+    function checkNoCollateralHarness(address account, address[] memory collaterals) external view returns (bool) {
+        return checkNoCollateral(account, collaterals);
+    }
+
+    function socializeDebtHarness(Flags configFlags) external returns(bool){
+        return configFlags.isNotSet(CFG_DONT_SOCIALIZE_DEBT);
     }
 
 }

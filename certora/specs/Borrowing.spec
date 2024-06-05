@@ -16,7 +16,56 @@ use rule privilegedOperation;
 
 //------------------------------- RULES TEST START ----------------------------------
 
+    //repayWithShares reverts
+    rule repayWithSharesReverts(env e) {
+        //FUNCTION PARAMETER
+        uint256 amount;
+        address receiver;
+        address onBehalfOf = actualCaller(e);
+        BorrowingHarness.VaultCache vaultCache = CVLUpdateVault();
+        bool isController = vaultIsController(onBehalfOf);
+        BorrowingHarness.Owed owedReceiver = owedGhost[receiver];
+        BorrowingHarness.Assets OwedReceiverAsAssets = owedToAssetsUpHarness(e, owedReceiver);
 
+        //Calculating amount to repay
+        BorrowingHarness.Shares sharesToRepay;
+        BorrowingHarness.Assets assetsToRepay;
+
+        sharesToRepay, assetsToRepay = repayWithSharesCalculationHarness(e, amount, sharesGhost[onBehalfOf], vaultCache, OwedReceiverAsAssets); 
+
+
+        //VALUES BEFORE
+        BorrowingHarness.Shares sharesOnBehalfOf = sharesGhost[onBehalfOf];
+
+        //FUNCTION CALL
+        repayWithShares@withrevert(e, amount, receiver);
+        bool lastRevert = lastReverted;
+
+        //VALUES AFTER
+
+        //ASSERTS
+
+
+
+        // //assert3: if sharesOnBehalfOf < sharesToRepay, then revert
+        // assert(sharesOnBehalfOf < sharesToRepay => lastRevert, "Not enough shares available to repay");
+
+        //assert4: if owed is less than assetsToRepay, then revert
+        assert(to_mathint(owedReceiver) < to_mathint(assetsToRepay) => lastRevert, "Not enough owed to repay");
+
+    //---------------ASSERTS OK START----------------
+
+        // //assert1: if e.msg.sender is not evc, then revert
+        // assert(EVC != e.msg.sender => lastRevert, "Only EVC can call repayWithShares");
+
+        // //assert2: if onBehalfOf is address(0), then revert
+        // assert(onBehalfOf == 0 => lastRevert, "On behalf of should not be address(0)");
+
+
+
+    //---------------ASSERTS OK END----------------
+
+    }
 
 
 
@@ -37,120 +86,22 @@ use rule privilegedOperation;
 
 //------------------------------- RULES PROBLEMS START ----------------------------------
 
-    //repay works
-    rule repayIntegraty(env e) {
-        //FUNCTION PARAMETER
-        address receiver;
-        require(receiver != currentContract);
-        uint256 amount;
-        BorrowingHarness.Assets amountAsAssests = uintToAssetsHarness(e, amount);
-        BorrowingHarness.Owed owedBeforeReceiver = owedGhost[receiver];
-        BorrowingHarness.Assets targetAmountAsAssets = //@audit 
-            amount == max_uint256 ? 
-            owedToAssetsUpHarness(e, owedBeforeReceiver) : 
-            amountAsAssests;
-        address onBehalfOf = actualCaller(e);
-        require(onBehalfOf != currentContract);
-        address otherUser;
-        require(otherUser != receiver && otherUser != currentContract && otherUser != onBehalfOf);
 
-        //VALUES BEFORE
-        BorrowingHarness.Owed owedReceiverBefore = owedGhost[receiver];
-        BorrowingHarness.Assets owedAssetUp = owedToAssetsUpHarness(e, owedReceiverBefore);
-        mathint owedRemaining = owedAssetUp - targetAmountAsAssets;
-        BorrowingHarness.Assets cashBefore = BorrowingHarness.vaultStorage.cash;
-        BorrowingHarness.VaultCache vaultCacheBefore = CVLUpdateVault();
-        require(vaultCacheBefore.asset == VaultAsset);
-        BorrowingHarness.Owed totalBorrowsBefore = BorrowingHarness.vaultStorage.totalBorrows;
-        
-        require(to_mathint(totalBorrowsBefore) >= to_mathint(targetAmountAsAssets));
-        bool isController = vaultIsController(onBehalfOf);
-        mathint targetTotalBorrowsAfter = 
-         //i: is the user not the only one that has borrowed
-        vaultCacheBefore.totalBorrows > owedBeforeReceiver
-            ? (totalBorrowsBefore - owedReceiverBefore + owedRemaining)
-            : owedRemaining;
-
-
-        uint256 userInterestAccumulatorOtherUserBefore = interestAccumulatorsGhost[otherUser];
-
-        //balances before
-        uint256 balanceOnBehalfOfBefore = VaultAsset.balanceOf(e, onBehalfOf);
-        uint256 balanceVaultBefore = VaultAsset.balanceOf(e, currentContract);
-        uint256 balanceOtherUserBefore = VaultAsset.balanceOf(e, otherUser);
-        BorrowingHarness.Owed owedOtherUserBefore = owedGhost[otherUser];
-
-        //FUNCTION CALL
-        uint256 returnValueCall = repay(e, amount, receiver);
-
-        //VALUES AFTER
-        BorrowingHarness.Assets cashAfter = BorrowingHarness.vaultStorage.cash;
-        BorrowingHarness.Owed totalBorrowsAfter = BorrowingHarness.vaultStorage.totalBorrows;
-        uint256 userInterestAccumulatorReceiverAfter = interestAccumulatorsGhost[receiver];
-        uint256 userInterestAccumulatorOtherUserAfter = interestAccumulatorsGhost[otherUser];
-        //balances after
-        uint256 balanceOnBehalfOfAfter = VaultAsset.balanceOf(e, onBehalfOf);
-        uint256 balanceVaultAfter = VaultAsset.balanceOf(e, currentContract);
-        uint256 balanceOtherUserAfter = VaultAsset.balanceOf(e, otherUser);
-        BorrowingHarness.Owed owedReceiverAfter = owedGhost[receiver];
-        BorrowingHarness.Owed owedOtherUserAfter = owedGhost[otherUser];
-
-
-
-        //ASSERTS
-        //assert0: should pass even if the caller is not the controller (no controller check)//@audit integrate this in an other rule
-
-
-        //assert1: owed of target account should be decreased by the amount repaid
-        assert(targetAmountAsAssets != 0 => owedRemaining == to_mathint(owedReceiverAfter), "Owed should be decreased by the amount repaid");
-
-
-        // //assert2: total borrows should be decreased by the amount repaid
-        // assert(targetAmountAsAssets != 0 => to_mathint(totalBorrowsAfter) == targetTotalBorrowsAfter, "Total borrows should be decreased by the amount repaid");
+ //
 
 
 
 
 
-        ///----------------------ASSERTS OK START-------------------------
-
-            // //assert3: asset balance of onBehalfOf should be decreased by the amount repaid
-            // assert(targetAmountAsAssets != 0 => balanceOnBehalfOfBefore - targetAmountAsAssets == to_mathint(balanceOnBehalfOfAfter), "Balance of onBehalfOf should be decreased by the amount repaid");
 
 
-            // //assert4: asset balance of the vault should be increased by the amount repaid
-            // assert(targetAmountAsAssets != 0 => balanceVaultBefore + targetAmountAsAssets == to_mathint(balanceVaultAfter), "Balance of the vault should be increased by the amount repaid");
 
-            // //assert5: no other asset balance should be changed
-            // assert(balanceOtherUserBefore == balanceOtherUserAfter, "Balance of other user should not be changed");
-
-            // //assert6: the retunred value should be the amount repaid
-            // assert(targetAmountAsAssets != 0 => to_mathint(returnValueCall) == to_mathint(targetAmountAsAssets), "Returned value should be the amount repaid");
-
-            // //assert7: no other owed should be changed
-            // assert(owedOtherUserBefore == owedOtherUserAfter, "Owed of other user should not be changed");
-
-            // //assert8: userAccumulator od receiver should be updated
-            // assert(targetAmountAsAssets != 0 => userInterestAccumulatorReceiverAfter == vaultCacheBefore.interestAccumulator, "Interest accumulator should be updated");
-
-
-            // //assert9: cash of the vault should be increased by the amount repaid
-            // assert(targetAmountAsAssets != 0 => cashBefore + targetAmountAsAssets == to_mathint(cashAfter), "Cash of the vault should be increased by the amount repaid");
-
-            // //assert10: the borrow of an other user should stay the same
-            // assert(owedOtherUserBefore == owedOtherUserAfter, "Owed of other user should stay the same");
-
-            // //assert11: userInterestAccumulator of other user should not be changed
-            // assert(userInterestAccumulatorOtherUserBefore == userInterestAccumulatorOtherUserAfter, "Interest accumulator of other user should not be changed");
-
-        ///----------------------ASSERTS OK END-------------------------
-    }
 
 //------------------------------- RULES PROBLEMS START ----------------------------------
 
 //------------------------------- RULES OK START ------------------------------------
     //borrow Reverts work
-    rule borrowIntegratyReverts(env e) {
+    rule borrowReverts(env e) {
         //FUNCTION PARAMETER
         uint256 amount;
         BorrowingHarness.Assets amountAsAssests = uintToAssetsHarness(e, amount);
@@ -326,7 +277,7 @@ use rule privilegedOperation;
             owedToAssetsUpHarness(e,fromOwedBefore) : 
             amountAsAssests;
         BorrowingHarness.Owed targetAmountAsOwed = assetToOwedHarness(e,targetAmountAsAssets);
-        BorrowingHarness.Owed finalAmountAsOwed = finalAmountDustHarness(targetAmountAsOwed, fromOwedBefore);
+        BorrowingHarness.Owed finalAmountAsOwed = finalAmountDustHarness(e,targetAmountAsOwed, fromOwedBefore);
 
         //TARGET VALUES
         BorrowingHarness.Owed targetFromOwedAfter = subUncheckedHarness(e, fromOwedBefore, finalAmountAsOwed);
@@ -384,6 +335,108 @@ use rule privilegedOperation;
 
         //assert3: if assets > owed, then revert
         assert(to_mathint(assets) > to_mathint(owed) => reverted, "Amount should not be greater than the owed");
+    }
+
+    //repay works
+    rule repayIntegraty(env e) {
+        //FUNCTION PARAMETER
+        address receiver;
+        require(receiver != currentContract);
+        uint256 amount;
+        BorrowingHarness.Assets amountAsAssests = uintToAssetsHarness(e, amount);
+        BorrowingHarness.Owed owedReceiverBefore = owedGhost[receiver];
+        BorrowingHarness.Assets targetAmountAsAssets = //@audit 
+            amount == max_uint256 ? 
+            owedToAssetsUpHarness(e, owedReceiverBefore) : 
+            amountAsAssests;
+        address onBehalfOf = actualCaller(e);
+        require(onBehalfOf != currentContract);
+        address otherUser;
+        require(otherUser != receiver && otherUser != currentContract && otherUser != onBehalfOf);
+
+        //VALUES BEFORE
+        BorrowingHarness.Assets owedAssetUp = owedToAssetsUpHarness(e, owedReceiverBefore);
+        require(owedAssetUp >= targetAmountAsAssets);
+        mathint owedRemainingAsAssetsMathint = owedAssetUp - targetAmountAsAssets;
+        require(owedRemainingAsAssetsMathint <= max_uint112);
+        BorrowingHarness.Assets owedRemainingAsAssets = assert_uint112(owedRemainingAsAssetsMathint); //@audit casting deos not work
+        BorrowingHarness.Owed owedRemainingAsOwed = assetToOwedHarness(e, owedRemainingAsAssets);
+
+        BorrowingHarness.Assets cashBefore = BorrowingHarness.vaultStorage.cash;
+        BorrowingHarness.VaultCache vaultCacheBefore = CVLUpdateVault();
+        require(vaultCacheBefore.asset == VaultAsset);
+        BorrowingHarness.Owed totalBorrowsBefore = BorrowingHarness.vaultStorage.totalBorrows;
+        
+        require(to_mathint(totalBorrowsBefore) >= to_mathint(targetAmountAsAssets));
+        bool isController = vaultIsController(onBehalfOf);
+        mathint targetTotalBorrowsAfter = 
+         //i: is the user not the only one that has borrowed
+        vaultCacheBefore.totalBorrows > owedReceiverBefore
+            ? (totalBorrowsBefore - owedReceiverBefore + owedRemainingAsOwed)
+            : owedRemainingAsOwed;
+
+        uint256 userInterestAccumulatorOtherUserBefore = interestAccumulatorsGhost[otherUser];
+
+        //balances before
+        uint256 balanceOnBehalfOfBefore = VaultAsset.balanceOf(e, onBehalfOf);
+        uint256 balanceVaultBefore = VaultAsset.balanceOf(e, currentContract);
+        uint256 balanceOtherUserBefore = VaultAsset.balanceOf(e, otherUser);
+        BorrowingHarness.Owed owedOtherUserBefore = owedGhost[otherUser];
+
+        //FUNCTION CALL
+        uint256 returnValueCall = repay(e, amount, receiver);
+
+        //VALUES AFTER
+        BorrowingHarness.Assets cashAfter = BorrowingHarness.vaultStorage.cash;
+        BorrowingHarness.Owed totalBorrowsAfter = BorrowingHarness.vaultStorage.totalBorrows;
+        uint256 userInterestAccumulatorReceiverAfter = interestAccumulatorsGhost[receiver];
+        uint256 userInterestAccumulatorOtherUserAfter = interestAccumulatorsGhost[otherUser];
+        //balances after
+        uint256 balanceOnBehalfOfAfter = VaultAsset.balanceOf(e, onBehalfOf);
+        uint256 balanceVaultAfter = VaultAsset.balanceOf(e, currentContract);
+        uint256 balanceOtherUserAfter = VaultAsset.balanceOf(e, otherUser);
+        BorrowingHarness.Owed owedReceiverAfter = owedGhost[receiver];
+        BorrowingHarness.Owed owedOtherUserAfter = owedGhost[otherUser];
+
+
+
+        //ASSERTS
+        //assert0: should pass even if the caller is not the controller (no controller check)//@audit integrate this in an other rule
+
+        //assert1: owed of target account should be decreased by the amount repaid
+        assert(targetAmountAsAssets != 0 => owedRemainingAsOwed == owedReceiverAfter, "Owed should be decreased by the amount repaid");
+
+        //assert2: total borrows should be decreased by the amount repaid
+        assert(targetAmountAsAssets != 0 => to_mathint(totalBorrowsAfter) == targetTotalBorrowsAfter, "Total borrows should be decreased by the amount repaid");
+
+        //assert3: asset balance of onBehalfOf should be decreased by the amount repaid
+        assert(targetAmountAsAssets != 0 => balanceOnBehalfOfBefore - targetAmountAsAssets == to_mathint(balanceOnBehalfOfAfter), "Balance of onBehalfOf should be decreased by the amount repaid");
+
+        //assert4: asset balance of the vault should be increased by the amount repaid
+        assert(targetAmountAsAssets != 0 => balanceVaultBefore + targetAmountAsAssets == to_mathint(balanceVaultAfter), "Balance of the vault should be increased by the amount repaid");
+
+        //assert5: no other asset balance should be changed
+        assert(balanceOtherUserBefore == balanceOtherUserAfter, "Balance of other user should not be changed");
+
+        //assert6: the retunred value should be the amount repaid
+        assert(targetAmountAsAssets != 0 => to_mathint(returnValueCall) == to_mathint(targetAmountAsAssets), "Returned value should be the amount repaid");
+
+        //assert7: no other owed should be changed
+        assert(owedOtherUserBefore == owedOtherUserAfter, "Owed of other user should not be changed");
+
+        //assert8: userAccumulator od receiver should be updated
+        assert(targetAmountAsAssets != 0 => userInterestAccumulatorReceiverAfter == vaultCacheBefore.interestAccumulator, "Interest accumulator should be updated");
+
+
+        //assert9: cash of the vault should be increased by the amount repaid
+        assert(targetAmountAsAssets != 0 => cashBefore + targetAmountAsAssets == to_mathint(cashAfter), "Cash of the vault should be increased by the amount repaid");
+
+        //assert10: the borrow of an other user should stay the same
+        assert(owedOtherUserBefore == owedOtherUserAfter, "Owed of other user should stay the same");
+
+        //assert11: userInterestAccumulator of other user should not be changed
+        assert(userInterestAccumulatorOtherUserBefore == userInterestAccumulatorOtherUserAfter, "Interest accumulator of other user should not be changed");
+
     }
 
     //functions need to revert if reentrancy is locked

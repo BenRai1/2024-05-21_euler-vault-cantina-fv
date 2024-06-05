@@ -6,12 +6,24 @@ methods {
     function useViewCallerHarness() external returns (address) envfree;
     function reentrancyLockedHarness() external returns (bool) envfree;
     function getControlersExt(address account) external returns (address[] memory) envfree;
-    function _.balanceOf(address account) external envfree;
     function _.uintToAssetsUpHarness(uint256 amount) external envfree;
-    function _.assetToOwedHarness(BorrowingHarness.Assets self) external envfree;
-    function finalAmountDustHarness(BorrowingHarness.Owed amount, BorrowingHarness.Owed currentOwed) external returns (BorrowingHarness.Owed) envfree;
-    function isNotSetCompatibeAssetHarness(BorrowingHarness.Flags self) external returns (bool) envfree;
+    function _.assetToOwedHarness(Type.Assets self) external envfree;
+    function owedToAssetsUpHarness(Type.Owed amount) external returns (Type.Assets) envfree;
+    function isNotSetCompatibeAssetHarness(Type.Flags self) external returns (bool) envfree;
     function isKnownNonOwnerAccountHarness(address account) external returns (bool) envfree;
+    function uintToAssetsHarness(uint256 amount) external returns (Type.Assets) envfree;
+    function uintToAssetsUpHarness(uint256 amount) external returns (Type.Assets) envfree;
+    function unitToAssetsHarness(uint256 amount) external returns (Type.Assets) envfree;
+    function owedToAssetsUpHarness(Type.Owed amount) external returns (Type.Assets) envfree;
+    function sharesToAssetsDownHarness(Type.Shares amount, Type.VaultCache vaultCache) external returns (Type.Assets) envfree;
+    function assetToOwedHarness(Type.Assets self) external returns (Type.Owed) envfree;
+    function uintToOwedHarness(uint256 amount) external returns (Type.Owed) envfree;
+    function subUncheckedHarness(Type.Owed a, Type.Owed b) external returns (Type.Owed) envfree;
+    function addUncheckedHarness(Type.Owed a, Type.Owed b) external returns (Type.Owed) envfree;
+    function assetsToSharesUpHarness(Type.Assets self, Type.VaultCache vaultCache) external returns (Type.Shares) envfree;
+
+
+    function _.balanceOf(address account) external envfree;
 
 }
 

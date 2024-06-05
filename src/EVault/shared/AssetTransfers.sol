@@ -11,7 +11,7 @@ import "./types/Types.sol";
 /// @custom:security-contact security@euler.xyz
 /// @author Euler Labs (https://www.eulerlabs.com/)
 /// @notice Transfer assets into and out of the vault
-abstract contract AssetTransfers is Base {
+abstract contract AssetTransfers is Base { 
     using TypesLib for uint256;
     using SafeERC20Lib for IERC20;
 

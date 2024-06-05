@@ -91,7 +91,7 @@ function actualCaller(env e) returns address {
     }
 }
 
-function actualCallerCheckController(env e) returns address {
+function actualCallerCheckController(env e) returns address { //@audit is the same as actualCaller
     if(e.msg.sender == evc) {
         address onBehalf;
         bool unused;
