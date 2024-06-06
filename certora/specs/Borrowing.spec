@@ -16,6 +16,29 @@ use rule privilegedOperation;
 
 //------------------------------- RULES TEST START ----------------------------------
 
+
+
+    //only function to change collateral balances
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//------------------------------- RULES TEST END ----------------------------------
+
+//------------------------------- RULES PROBLEMS START ----------------------------------
+
+
     //repayWithShares reverts
     rule repayWithSharesReverts(env e) {
         //FUNCTION PARAMETER
@@ -53,7 +76,7 @@ use rule privilegedOperation;
         //assert4: if owed is less than assetsToRepay, then revert
         assert(to_mathint(owedReceiver) < to_mathint(assetsToRepay) => lastRevert, "Not enough owed to repay");
 
-    //---------------ASSERTS OK START----------------
+        //---------------ASSERTS OK START----------------
 
         // //assert1: if e.msg.sender is not evc, then revert
         // assert(EVC != e.msg.sender => lastRevert, "Only EVC can call repayWithShares");
@@ -63,31 +86,9 @@ use rule privilegedOperation;
 
 
 
-    //---------------ASSERTS OK END----------------
+        //---------------ASSERTS OK END----------------
 
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//------------------------------- RULES TEST END ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-
- //
 
 
 
@@ -100,6 +101,29 @@ use rule privilegedOperation;
 //------------------------------- RULES PROBLEMS START ----------------------------------
 
 //------------------------------- RULES OK START ------------------------------------
+
+    //only functions to change vaultStorage cash
+    rule onlyToChangeVaultStorageCash(env e, method f, calldataarg args) filtered{
+        f -> !f.isView && !f.isPure 
+        && !BASE_HARNESS_FUNCTIONS(f)
+        && !BORROWING_HARNESS_FUNCTIONS(f)
+    } {
+        //VALUES BEFORE
+        uint256 cashBefore = cash(e);
+
+        //FUNCTION CALL
+        f(e,args);
+
+        //VALUES AFTER
+        uint256 cashAfter = cash(e);
+
+        //ASSERTION
+        assert(cashBefore != cashAfter => 
+        f.selector == sig:borrow(uint256, address).selector ||
+        f.selector == sig:repay(uint256, address).selector,
+        "Functions should not be able to change cash");
+    }
+
     //borrow Reverts work
     rule borrowReverts(env e) {
         //FUNCTION PARAMETER

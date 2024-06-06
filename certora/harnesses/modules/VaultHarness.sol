@@ -77,4 +77,21 @@ contract VaultHarness is VaultModule, TokenModule, AbstractBaseHarness {
     function cache_cash() public view returns (Assets) {
         return loadVault().cash;
     }
+
+    function getCurrentVaultCacheHarness() external returns (VaultCache memory){
+        VaultCache memory vaultCache;
+        (vaultCache.asset, vaultCache.oracle, vaultCache.unitOfAccount) = ProxyUtils.metadata();
+        vaultCache.lastInterestAccumulatorUpdate = vaultStorage.lastInterestAccumulatorUpdate;
+        vaultCache.cash = vaultStorage.cash;
+        vaultCache.totalBorrows = vaultStorage.totalBorrows;
+        vaultCache.totalShares = vaultStorage.totalShares;
+        vaultCache.supplyCap = vaultStorage.supplyCap.resolve();
+        vaultCache.borrowCap = vaultStorage.borrowCap.resolve();
+        vaultCache.hookedOps = vaultStorage.hookedOps;
+        vaultCache.snapshotInitialized = vaultStorage.snapshotInitialized;
+        vaultCache.accumulatedFees = vaultStorage.accumulatedFees;
+        vaultCache.configFlags = vaultStorage.configFlags;
+        vaultCache.interestAccumulator = vaultStorage.interestAccumulator;
+        return vaultCache;
+    }
 }

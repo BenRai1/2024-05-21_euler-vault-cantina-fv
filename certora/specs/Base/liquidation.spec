@@ -7,6 +7,7 @@ methods {
     function getCurrentVaultCacheHarness() external returns (Type.VaultCache memory) envfree;
     function checkNoCollateralHarness(address account, address[] collaterals) external returns (bool) envfree;
     function socializeDebtHarness(Type.Flags configFlags) external returns(bool) envfree;
+    function finalAmountDustHarness(Type.Owed amount, Type.Owed currentOwed) external returns (Type.Owed) envfree;
 
     //Function summaries
     function Cache.loadVault() internal returns (Type.VaultCache memory) with(env e) => CVLLoadVault();

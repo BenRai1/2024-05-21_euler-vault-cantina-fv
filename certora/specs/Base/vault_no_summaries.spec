@@ -41,9 +41,6 @@ import "./abstractBase.spec";
 
         //Summaries
         function Cache.updateVault() internal returns (Type.VaultCache memory) with(env e) => CVLUpdateVaultAssumeNoUpdate();
-
-        function _.increaseBalance(Type.VaultCache memory vaultCache, address account,address sender,Type.Shares amount, Type.Assets assets
-    ) internal => CVLIncreaseBalance(account, sender, amount, assets) expect void;
     
     }
 
@@ -79,28 +76,6 @@ import "./abstractBase.spec";
 ///////////////// DEFINITIONS END /////////////////////
 
 ////////////////// FUNCTIONS START //////////////////////
-
-    function CVLIncreaseBalance(address account, address sender, Type.Shares amount, Type.Assets assets){
-        // assert(account != 0); //commented out since only used for nonrevert tests
-        //getUserBalance
-        mathint origBalance = shareBalanceGhost[account];
-        require(origBalance + amount <= max_uint112);
-        mathint newBalance = origBalance + amount;
-
-        //setUserBalance
-        shareBalanceGhost[account] = newBalance;
-
-        //setTotalShares
-        totalSharesGhost = totalSharesGhost + amount;
-    }
-
-
-    ghost mapping(address => mathint) shareBalanceGhost{
-        axiom forall address account. shareBalanceGhost[account] <= max_uint112 && shareBalanceGhost[account] >= 0;
-    }
-    ghost mathint totalSharesGhost{
-        axiom totalSharesGhost <= max_uint112 && totalSharesGhost >= 0;
-    }
 
     function CVLUpdateVaultAssumeNoUpdate() returns Type.VaultCache {
             Type.VaultCache vaultCache = getCurrentVaultCacheHarness();

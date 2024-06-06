@@ -229,4 +229,14 @@ contract LiquidationHarness is AbstractBaseHarness, Liquidation {
         return configFlags.isNotSet(CFG_DONT_SOCIALIZE_DEBT);
     }
 
+
+    function finalAmountDustHarness(Owed amount, Owed currentOwed) external pure returns (Owed) {
+        if (
+            (amount > currentOwed && amount.subUnchecked(currentOwed).isDust())
+                || (amount < currentOwed && currentOwed.subUnchecked(amount).isDust())
+        ) {
+            return currentOwed;
+        } 
+        return amount;  
+    }
 }

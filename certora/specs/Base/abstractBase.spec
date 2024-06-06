@@ -21,6 +21,9 @@ methods {
     function subUncheckedHarness(Type.Owed a, Type.Owed b) external returns (Type.Owed) envfree;
     function addUncheckedHarness(Type.Owed a, Type.Owed b) external returns (Type.Owed) envfree;
     function assetsToSharesUpHarness(Type.Assets self, Type.VaultCache vaultCache) external returns (Type.Shares) envfree;
+    function assetsToSharesDownHarness(Type.Assets self, Type.VaultCache vaultCache) external returns (Type.Shares) envfree;
+    function assetsToUintHarness(Type.Assets self) external returns (uint256) envfree;
+    function sharesToUintHarness(Type.Shares self) external returns (uint256) envfree;
 
 
     function _.balanceOf(address account) external envfree;

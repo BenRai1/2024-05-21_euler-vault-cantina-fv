@@ -16,15 +16,6 @@ use rule privilegedOperation;
 //summ up getCollaterals (limit collaterals to 1)
 methods {
 
-    // function _.calculateLiquidation(
-    //     Type.VaultCache memory vaultCache,
-    //     address liquidator,
-    //     address violator,
-    //     address collateral,
-    //     uint256 desiredRepay
-    // // certora: 'private' to 'internal'
-    // ) internal => CVLCalculateLiquidation(liquidator, violator, collateral, desiredRepay) expect (address, address, address,address[], Type.Assets, Type.Assets, uint256); //@audit "expected address[] at that position"
-
     function _.calculateLiquidation(
         Type.VaultCache memory vaultCache,
         address liquidator,
@@ -32,30 +23,10 @@ methods {
         address collateral,
         uint256 desiredRepay
     // certora: 'private' to 'internal'
-    ) internal => CVLCalculateLiquidation(liquidator, violator, collateral, desiredRepay) expect (Type.VaultCache memory vaultCache); //@audit "expected address[] at that position"
+    ) internal => CVLCalculateLiquidation(liquidator, violator, collateral, desiredRepay) expect (Type.LiquidationCache memory); 
 
 
-    // function _.getCollaterals(address account) internal => CVLGetCollaterals(account) expect (address[] memory);
-    // function _.calculateMaxLiquidation(
-    //     //liquidation cache
-    //     address liquidator,
-    //     address violator,
-    //     address collateral,
-    //     address[] calldata collaterals,
-    //     Type.Assets liability,
-    //     Type.Assets repay,
-    //     uint256 yieldBalance,
-    //     //vault cache
-    //     Type.VaultCache memory VaultCache
-    //     ) internal => CVLCalculateMaxLiquidation(
-    //         liquidator,
-    //         violator,
-    //         collateral,
-    //         collaterals,
-    //         liability,
-    //         repay,
-    //         yieldBalance) 
-    //     expect (address, address, address,address[], Type.Assets, Type.Assets, uint256);
+
 }
 
 function CVLCalculateLiquidation(
@@ -63,55 +34,83 @@ function CVLCalculateLiquidation(
     address violator,
     address collateral,
     uint256 desiredRepay
-) returns (address, address, address,address[], Type.Assets, Type.Assets, uint256){
-        address[]collaterals;
-        require(collaterals.length ==1);
-        require(collaterals[0] == collateralsGhost[violator]);
-        Type.Assets liability = owedToAssetsUpHarness(owedGhost[violator]); 
-        Type.Assets repay = repayGhost[liquidator];
-        uint256 yieldBalance = yieldBalanceGhost[liquidator];
-
-    return (liquidator, violator, collateral, collaterals, liability, repay, yieldBalance);
+) returns Type.LiquidationCache {
+    Type.LiquidationCache cache;
+    require(cache.liquidator == liquidator);
+    require(cache.violator == violator);
+    require(cache.collateral == collateral);
+    require(cache.collaterals.length == 1);
+    require(cache.collaterals[0] == collateralsGhost[violator]);
     
+    Type.Assets liability = owedToAssetsUpHarness(owedGhost[violator]);
+    require(cache.liability == liability);
+    Type.Assets repay = repayGhost[liquidator];
+    require(cache.repay == repay);
+    uint256 yieldBalance = yieldBalanceGhost[liquidator];
+    require(cache.yieldBalance == yieldBalance);
+
+    return cache;    
 }
 
-
-ghost mapping (address => address) collateralsGhost;
+ghost mapping(address => address) collateralsGhost;
 
 ghost mapping(address => Type.Assets) repayGhost;
 
 ghost mapping(address => uint256) yieldBalanceGhost;
 
+function CVLGetCollaterals(address account) returns address[] {
+    address[] collaterals;
+    require(collaterals.length == 1);
+    require(collaterals[0] == collateralsGhost[account]);
+    return collaterals;
+}   
 
-
-// function CVLGetCollaterals(address account) returns address[] {
-//     address[] collaterals;
-//     require(collaterals.length == 1);
-//     require(collaterals[0] == collateralsGhost[account]);
-//     return collaterals;
-// }   
-
-
-// function CVLCalculateMaxLiquidation(
-//     address liquidator,
-//     address violator,
-//     address collateral,
-//     address[] collaterals,
-//     Type.Assets liability,
-//     Type.Assets repay,
-//     uint256 yieldBalance
-//     ) returns (address, address, address,address[], Type.Assets, Type.Assets, uint256){
-//         Type.Assets calculatedMaxRepay = calculatedMaxRepayGhost[liquidator];
-//         uint256 calculatedMaxYieldBalance = calculatedMaxYieldBalanceGhost[liquidator];
-//     return (liquidator, violator, collateral, collaterals, liability, calculatedMaxRepay, calculatedMaxYieldBalance);
-// }
-
-// ghost mapping(address => Type.Assets) calculatedMaxRepayGhost;
-// ghost mapping(address => uint256) calculatedMaxYieldBalanceGhost;
 
 //------------------------------- RULES TEST START ----------------------------------
 
+//executeLiquidation reverts
+rule executeLiquidationReverts(env e){
+    //FUNCTION PARAMETER
+    address violator;
+    address collateral;
+    uint256 repayAssets;
+    uint256 minYieldBalance;
 
+    address liquidator = actualCaller(e); //i: onBehalfOf
+    Type.VaultCache vaultCache = CVLUpdateVault();
+    Type.LiquidationCache liquidationCache = CVLCalculateLiquidation(liquidator, violator, collateral, repayAssets);
+
+    //VALUES BEFORE
+    Type.Owed owedViolatorBefore = owedGhost[violator];
+    Type.Owed repayAsOwed = assetToOwedHarness(liquidationCache.repay); //i: amount
+    Type.Owed finalAmount = finalAmountDustHarness(repayAsOwed, owedViolatorBefore);
+
+    //FUNCTION CALL
+    liquidate@withrevert(e, violator, collateral, repayAssets, minYieldBalance);
+    //must call liquidate, calculateLiquidation is summarized
+
+    //VALUES AFTER
+
+    //ASSERTS
+    // //assert1: if minYealdBalance > yieldBalance, the function reverts
+    // assert(minYieldBalance > liquidationCache.yieldBalance => lastReverted, "minYieldBalance is higher than yieldBalance, but the function did not revert");
+
+    //assert2: if the finalAmount that should be repayed is bigger than the owedViolatorBefore, the function reverts
+    assert(finalAmount > owedViolatorBefore => lastReverted, "FinalAmount is higher than owedViolatorBefore, but the function did not revert");
+
+
+    //assert3: if the owed remaining is bigger than the owed exact the function reverts
+
+   
+
+
+}
+
+
+
+//------------------------------- RULES TEST END ----------------------------------
+
+//------------------------------- RULES PROBLEMS START ----------------------------------
     //liquidate reverts
     rule liquidateReverts(env e) {
         //FUNCTION PARAMETER
@@ -158,14 +157,14 @@ ghost mapping(address => uint256) yieldBalanceGhost;
         //ASSERTS
 
 
-        // //assert9: if the desired repay is higher than the calculated repay, the function reverts//@audit time out
-        // assert(liability != 0 && repayAssets != max_uint256 && to_mathint(repayAssets) > to_mathint(repayCalculated) => reverted, "Desired repay is higher than the calculated repay, but the function did not revert");
+        //assert9: if the desired repay is higher than the calculated repay, the function reverts//@audit time out
+        assert(liability != 0 && repayAssets != max_uint256 && to_mathint(repayAssets) > to_mathint(repayCalculated) => reverted, "Desired repay is higher than the calculated repay, but the function did not revert");
 
 
 
 
-        //assert12: minYieldBalance > finalYieldBalance, the function reverts //@audit does not work, check why: CollateralValue != 0
-        assert(liability != 0 && collateralValue != 0 && yieldBalanceCalculated > 0 && to_mathint(minYieldBalance) > finalYieldBalance => reverted, "minYieldBalance is higher than the finalYieldBalance, but the function did not revert");
+        // //assert12: minYieldBalance > finalYieldBalance, the function reverts //@audit does not work, check why: CollateralValue != 0
+        // assert(liability != 0 && collateralValue != 0 && yieldBalanceCalculated > 0 && to_mathint(minYieldBalance) > finalYieldBalance => reverted, "minYieldBalance is higher than the finalYieldBalance, but the function did not revert");
 
         // //assert13: if the amount that should be repayed is bigger than the fromOwed, the function reverts
 
@@ -326,12 +325,6 @@ ghost mapping(address => uint256) yieldBalanceGhost;
 
 
     }
-
-
-
-//------------------------------- RULES TEST END ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
 
 //------------------------------- RULES PROBLEMS START ----------------------------------
 

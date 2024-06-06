@@ -17,6 +17,9 @@ methods {
     function loadUserBorrowHarness(Type.VaultCache vaultCache, address account) external returns (Type.Owed, Type.Owed) envfree;
     function finalAmountDustHarness(Type.Owed amount, Type.Owed currentOwed) external returns (Type.Owed) envfree;
 
+    //Borrowing functions
+
+
 
 
     // dispatch and use MockFlashBorrow if more detailed implementation is required
@@ -58,6 +61,16 @@ methods {
     f.selector == sig:repay(uint256, address).selector ||
     f.selector == sig:repayWithShares(uint256, address).selector ||
     f.selector == sig:touch().selector;
+
+    definition BORROWING_HARNESS_FUNCTIONS(method f) returns bool =
+    f.selector == sig:getBalanceAndForwarderExt(address).selector ||
+    f.selector == sig:getCurrentVaultCacheHarness().selector ||
+    f.selector == sig:getUnderlyingAssetExt().selector ||
+    f.selector == sig:getVaultInterestAccExt().selector ||
+    f.selector == sig:initOperationExternal(uint32,address).selector ||
+    f.selector == sig:loadUserBorrowHarness(Type.VaultCache,address).selector ||
+    f.selector == sig:repayWithSharesCalculationHarness(uint256,Type.Shares,Type.VaultCache,Type.Assets).selector;
+
 
 
 

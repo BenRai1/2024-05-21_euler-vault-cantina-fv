@@ -179,12 +179,25 @@ abstract contract AbstractBaseHarness is Base {
         return self.toSharesUp(vaultCache);
     }
 
+    function assetsToSharesDownHarness(Assets self, VaultCache memory vaultCache) external pure returns (Shares) {
+        return self.toSharesDown(vaultCache);
+    }
+
     function isNotSetCompatibeAssetHarness(Flags self) external pure returns (bool) {
         return self.isNotSet(CFG_EVC_COMPATIBLE_ASSET);
     }
 
     function isKnownNonOwnerAccountHarness(address account) external view returns (bool) {
         return isKnownNonOwnerAccount(account);
+    }
+
+    ///////////////////////////// TO UINT //////////////////////////////////////
+    function assetsToUintHarness(Assets self) external pure returns (uint256) {
+        return self.toUint();
+    }
+
+    function sharesToUintHarness(Shares self) external pure returns (uint256) {
+        return self.toUint();
     }
 
     
