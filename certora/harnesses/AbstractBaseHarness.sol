@@ -36,6 +36,10 @@ abstract contract AbstractBaseHarness is Base {
         return isAccountStatusCheckDeferred(account);
     }
 
+    function areChecksDeferredExt() external view returns (bool) {
+        return IEVC(evc).areChecksDeferred();
+    }
+
     function isInLiquidationCoolOffExt(address account) external view returns (bool) {
         return block.timestamp < getLastAccountStatusCheckTimestamp(account) + vaultStorage.liquidationCoolOffTime;
     }
@@ -123,6 +127,15 @@ abstract contract AbstractBaseHarness is Base {
         return ProxyUtils.useViewCaller();
     }
 
+    
+    function isNotSetCompatibeAssetHarness(Flags self) external pure returns (bool) {
+        return self.isNotSet(CFG_EVC_COMPATIBLE_ASSET);
+    }
+
+    function isKnownNonOwnerAccountHarness(address account) external view returns (bool) {
+        return isKnownNonOwnerAccount(account);
+    }
+
 
     //--------------------------------------------------------------------------
     // Transformations uint, Owed, Assets
@@ -149,6 +162,10 @@ abstract contract AbstractBaseHarness is Base {
 
     function sharesToAssetsDownHarness(Shares amount, VaultCache memory vaultCache) external pure returns (Assets) {
         return amount.toAssetsDown(vaultCache);
+    }
+
+    function shareToAssetsUpHarness(Shares amount, VaultCache memory vaultCache) external pure returns (Assets) {
+        return amount.toAssetsUp(vaultCache);
     }
 
     ///////////////////////////// TO OWED //////////////////////////////////////
@@ -183,13 +200,10 @@ abstract contract AbstractBaseHarness is Base {
         return self.toSharesDown(vaultCache);
     }
 
-    function isNotSetCompatibeAssetHarness(Flags self) external pure returns (bool) {
-        return self.isNotSet(CFG_EVC_COMPATIBLE_ASSET);
+    function uintToSharesHarness(uint256 amount) external pure returns (Shares) {
+        return Shares.wrap(uint112(amount));
     }
 
-    function isKnownNonOwnerAccountHarness(address account) external view returns (bool) {
-        return isKnownNonOwnerAccount(account);
-    }
 
     ///////////////////////////// TO UINT //////////////////////////////////////
     function assetsToUintHarness(Assets self) external pure returns (uint256) {

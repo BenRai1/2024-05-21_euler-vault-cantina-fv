@@ -11,11 +11,733 @@ using DummyERC20A as VaultAsset;
 // used to test running time
 use builtin rule sanity;
 
-
+//invariants: vaultStorage.cash should never be smaller than the balance of the vault
 
 //------------------------------- RULES TEST START ----------------------------------
+    //@audit write rules for view functions (??)
+    //invariants:
+    // // 1. cash should never be bigger than the balance of the vault
+    // invariant cashShouldNeverBeBiggerThanBalance(env e) 
+    // Vault.vaultStorage.cash <= userAssets(e, currentContract);
+
+    //only functions to increase the total supply of shares
+    //only functions to decreas the total supply of shares
 
 
+
+
+
+
+    //transferFromMax works
+    rule transferFromMaxWorks(env e){
+        //FUNCTION PARAMETER
+        address from;
+        address to;
+        address otherUser;
+        Type.Shares finalShares = shareBalanceGhost[from];
+        address onBahalfOf = actualCaller(e); //i: onBahalfOf  address
+        require(otherUser != from && otherUser != onBahalfOf && otherUser != to);
+        require(from != to && from != onBahalfOf);
+
+        //VALUES BEFORE
+        //shares before
+        Type.Shares sharesFromBefore = shareBalanceGhost[from];
+        Type.Shares sharesToBefore = shareBalanceGhost[to];
+        Type.Shares sharesotherUserBefore = shareBalanceGhost[otherUser];
+
+        //allowance before
+        uint256 allowanceOtherUserForOnBehalfOfBefore = shareAllowanceGhost[otherUser][onBahalfOf]; //i: otherUser => onBahalfOf
+        uint256 allowanceOtherUserForFromBefore = shareAllowanceGhost[otherUser][from]; //i: otherUser => from
+        uint256 allowanceFromForOnBehalfOfBefore = shareAllowanceGhost[from][onBahalfOf]; //i: from => onBahalfOf 
+        uint256 allowanceFromForOtherUserBefore = shareAllowanceGhost[from][otherUser]; //i: from => otherUser
+        uint256 allowanceOnBehalfOfForOtherUserBefore = shareAllowanceGhost[onBahalfOf][otherUser]; //i: onBahalfOf => otherUser
+        uint256 allowanceOnBahalfOfForFromBefore = shareAllowanceGhost[onBahalfOf][from]; //i: onBahalfOf => from
+
+
+
+        //FUNCTION CALL
+        bool returnValueCall= transferFromMax(e, from, to);
+
+        //VALUES AFTER
+        //shares after
+        Type.Shares sharesFromAfter = shareBalanceGhost[from];
+        Type.Shares sharesToAfter = shareBalanceGhost[to];
+        Type.Shares sharesotherUserAfter = shareBalanceGhost[otherUser];
+
+        //allowance after
+        uint256 allowanceOtherUserForOnBehalfOfAfter = shareAllowanceGhost[otherUser][onBahalfOf]; //i: otherUser => onBahalfOf
+        uint256 allowanceOtherUserForFromAfter = shareAllowanceGhost[otherUser][from]; //i: otherUser => from
+        uint256 allowanceFromForOnBehalfOfAfter = shareAllowanceGhost[from][onBahalfOf]; //i: from => onBahalfOf
+        uint256 allowanceFromForOtherUserAfter = shareAllowanceGhost[from][otherUser]; //i: from => otherUser
+        uint256 allowanceOnBahalfOfForOtherUserAfter = shareAllowanceGhost[onBahalfOf][otherUser]; //i: onBahalfOf => otherUser
+        uint256 allowanceOnBahalfOfForFromAfter = shareAllowanceGhost[onBahalfOf][from]; //i: onBahalfOf => from
+    
+
+
+
+        //ASSERTS
+  
+
+
+
+        //assert3: shares for from should be 0
+        assert(sharesFromAfter == 0, "Shares of from should be 0");
+
+        //assert4: shares should increase for to by finalShares
+        assert(sharesToBefore + finalShares == to_mathint(sharesToAfter), "Shares of to should increase by finalShares");
+
+        //assert6: if allowanceFromForOnBehalfOf != max_uint256, allowance should decrease by finalShares
+        assert(allowanceFromForOnBehalfOfBefore != max_uint256 => allowanceFromForOnBehalfOfBefore - finalShares == to_mathint(allowanceFromForOnBehalfOfAfter), "Allowance from => onBehalfOf should decrease by finalShares");
+
+        //assert7: if allowanceFromForOnBehalfOf = max_uint256, allowance should stay the same
+        assert(allowanceFromForOnBehalfOfBefore == max_uint256 => allowanceFromForOnBehalfOfBefore == allowanceFromForOnBehalfOfAfter, "Allowance from => onBehalfOf should stay the same");
+
+        //assert8: allowance should not change for otherUser
+        assert(allowanceOtherUserForFromBefore == allowanceOtherUserForFromAfter
+        && allowanceOtherUserForOnBehalfOfBefore == allowanceOtherUserForOnBehalfOfAfter,
+        "Allowance otherUser => from/onBehalfOf should not change");
+
+        //assert9: allowance should not change for onBehalfOf
+        assert(allowanceOnBahalfOfForFromBefore == allowanceOnBahalfOfForFromAfter
+        && allowanceOnBehalfOfForOtherUserBefore == allowanceOnBahalfOfForOtherUserAfter,
+        "Allowance onBehalfOf => from/otherUser should not change");
+
+        //assert10: allowance from => otherUser should not change
+        assert(allowanceFromForOtherUserBefore == allowanceFromForOtherUserAfter, "Allowance from => otherUser should not change");
+
+
+
+
+
+
+        //-----------------------ASSERTS OK START -----------------------
+            //assert1: returnValueCall should be true
+            assert(returnValueCall == true, "Return value should be true");
+
+
+            //assert5: shares should not change for otherUser
+            assert(sharesotherUserBefore == sharesotherUserAfter, "Shares of otherUser should not change");
+
+
+        //-----------------------ASSERTS OK END -----------------------
+
+    } 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//------------------------------- RULES TEST END ----------------------------------
+
+//------------------------------- RULES PROBLEMS START ----------------------------------
+
+//------------------------------- RULES PROBLEMS START ----------------------------------
+
+//------------------------------- RULES OK START ------------------------------------
+
+    //only change snapshot //@audit snapshot is not changed at all (tested by removing the code) but passes
+    rule onlyChangeSnapshot(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //VALUES BEFORE
+        bool snapshotBefore = Vault.vaultStorage.snapshotInitialized;
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        bool snapshotAfter = Vault.vaultStorage.snapshotInitialized;
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(snapshotBefore != snapshotAfter =>
+        f.selector == sig:deposit(uint256,address).selector ||
+        f.selector == sig:mint(uint256,address).selector ||
+        f.selector == sig:redeem(uint256,address,address).selector ||
+        f.selector == sig:skim(uint256,address).selector ||
+        f.selector == sig:transfer(address,uint256).selector ||
+        f.selector == sig:transferFrom(address,address,uint256).selector ||
+        f.selector == sig:transferFromMax(address,address).selector ||
+        f.selector == sig:withdraw(uint256,address,address).selector,
+        "This function should not be able to change the user shares");
+    }
+
+    //only change allowance
+    rule onlyChangeAllowance(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //FUNCTION PARAMETER
+        address user1;
+        address user2;
+        //VALUES BEFORE
+        uint256 allowanceBefore = shareAllowanceGhost[user1][user2];
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        uint256 allowanceAfter = shareAllowanceGhost[user1][user2];
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(allowanceBefore != allowanceAfter =>
+        f.selector == sig:transferFrom(address,address,uint256).selector ||
+        f.selector == sig:transferFromMax(address,address).selector ||
+        f.selector == sig:redeem(uint256,address,address).selector ||
+        f.selector == sig:transfer(address,uint256).selector ||
+        f.selector == sig:withdraw(uint256,address,address).selector ||
+        f.selector == sig:approve(address,uint256).selector,
+        "This function should not be able to change the user shares");
+    }
+
+    //only change total shares
+    rule onlyChangeTotalShares(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //VALUES BEFORE
+        mathint totalSharesBefore = totalSharesGhost;
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        mathint totalSharesAfter = totalSharesGhost;
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(totalSharesBefore != totalSharesAfter =>
+        f.selector == sig:deposit(uint256,address).selector ||
+        f.selector == sig:mint(uint256,address).selector ||
+        f.selector == sig:redeem(uint256,address,address).selector ||
+        f.selector == sig:skim(uint256,address).selector ||
+        f.selector == sig:withdraw(uint256,address,address).selector,
+        "This function should not be able to change the user shares");
+    }
+
+   //only change vaultstorage.cash
+    rule onlyChangeVaultCash(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //VALUES BEFORE
+        Type.Assets cashBefore = Vault.vaultStorage.cash;
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        Type.Assets cashAfter = Vault.vaultStorage.cash;
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(cashBefore != cashAfter =>
+        f.selector == sig:deposit(uint256,address).selector ||
+        f.selector == sig:mint(uint256,address).selector ||
+        f.selector == sig:redeem(uint256,address,address).selector ||
+        f.selector == sig:skim(uint256,address).selector ||
+        f.selector == sig:withdraw(uint256,address,address).selector,
+        "This function should not be able to change the user shares");
+    }
+
+    //only change vault shares
+    rule onlyChangeUserShares(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //FUNCTION PARAMETER
+        address user;
+        //VALUES BEFORE
+        Type.Shares sharesUserBefore = shareBalanceGhost[user];
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        Type.Shares sharesUserAfter = shareBalanceGhost[user];
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(sharesUserBefore != sharesUserAfter =>
+        f.selector == sig:deposit(uint256,address).selector ||
+        f.selector == sig:mint(uint256,address).selector ||
+        f.selector == sig:redeem(uint256,address,address).selector ||
+        f.selector == sig:skim(uint256,address).selector ||
+        f.selector == sig:transfer(address,uint256).selector ||
+        f.selector == sig:transferFrom(address,address,uint256).selector ||
+        f.selector == sig:transferFromMax(address,address).selector ||
+        f.selector == sig:withdraw(uint256,address,address).selector,
+        "This function should not be able to change the user shares");
+    }
+
+    //only change balance of collateral
+    rule onlyChangeBalanceOfCollateral(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //FUNCTION PARAMETER
+        address user;
+        //VALUES BEFORE
+        Type.VaultCache vaultCacheBefore = getCurrentVaultCacheHarness();
+        address collateral = vaultCacheBefore.asset;
+        require(collateral == VaultAsset);
+        //Balances before
+        uint256 balanceUserBefore = VaultAsset.balanceOf(e,user);
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        //Balances after
+        uint256 balanceUserAfter = VaultAsset.balanceOf(e,user);
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(balanceUserBefore != balanceUserAfter =>
+        f.selector == sig:deposit(uint256,address).selector ||
+        f.selector == sig:mint(uint256,address).selector ||
+        f.selector == sig:redeem(uint256,address,address).selector ||
+        f.selector == sig:withdraw(uint256,address,address).selector,
+        "Only deposit, mint, redeem and withdraw should change the balance of the collateral");
+    }
+
+    //redeem works allowances
+    rule redeemWorksAllowances(env e){
+        //FUNCTION PARAMETER
+        uint256 amount;
+        require(amount <= max_uint112);
+        Type.Shares amountInShares = uintToSharesHarness(amount);
+        address receiver;
+        address owner;
+        address otherUser;
+        address onBehalfOf = actualCaller(e);
+        require(otherUser != owner && otherUser != onBehalfOf);
+        require(onBehalfOf != owner);
+
+        //VALUES BEFORE
+        Type.VaultCache vaultCacheBefore = getCurrentVaultCacheHarness();
+        address collateral = vaultCacheBefore.asset;
+        require(collateral == VaultAsset);
+        //Balances shares before
+        Type.Shares sharesOwnerBefore = shareBalanceGhost[owner]; 
+        //Allownace before
+        uint256 allowanceOnBehalfForOwnerBefore = shareAllowanceGhost[owner][onBehalfOf]; //i: owner => onBehalfOf
+        uint256 allowanceOnBehalfOfForOtherUserBefore = shareAllowanceGhost[otherUser][onBehalfOf]; //i: otherUser => onBehalfOf
+        uint256 allowanceOtherUserForOwnerBefore = shareAllowanceGhost[owner][otherUser]; //i: owner => otherUser
+        uint256 allowanceOtherUserForOnBehalfOfBefore = shareAllowanceGhost[onBehalfOf][otherUser]; //i: onBehalfOf => otherUser
+        uint256 allowanceOwnerForOnBehalfOfBefore = shareAllowanceGhost[onBehalfOf][owner]; //i: onBehalfOf => owner
+        uint256 allowanceOwnerForOtherUserBefore = shareAllowanceGhost[otherUser][owner]; //i: otherUser => owner
+
+
+        //FINAL VALUES
+        Type.Shares finalShares = amount == max_uint256 ? sharesOwnerBefore : amountInShares;
+        // Type.Assets finalAssets = sharesToAssetsDownHarness(finalShares, vaultCacheBefore);
+
+        //FUNCTION CALL
+        uint256 returnValueCall = redeem(e, amount, receiver, owner);
+
+        //VALUES AFTER
+        Type.VaultCache vaultCacheAfter = getCurrentVaultCacheHarness();
+        //Allownace after
+        uint256 allowanceOnBehalfForOwnerAfter = shareAllowanceGhost[owner][onBehalfOf]; //i: ownder => onBehalfOf
+        uint256 allowanceOtherUserForOwnerAfter = shareAllowanceGhost[owner][otherUser]; //i: owner => otherUser
+        uint256 allowanceOnBehalfOfForOtherUserAfter = shareAllowanceGhost[otherUser][onBehalfOf]; //i: otherUser => onBehalfOf
+        uint256 allowanceOtherUserForOnBehalfOfAfter = shareAllowanceGhost[onBehalfOf][otherUser]; //i: onBehalfOf => otherUser
+        uint256 allowanceOwnerForOnBehalfOfAfter = shareAllowanceGhost[onBehalfOf][owner]; //i: onBehalfOf => owner
+        uint256 allowanceOwnerForOtherUserAfter = shareAllowanceGhost[otherUser][owner]; //i: otherUser => owner
+
+        //ASSERTS
+        //assert1: if finalShares != 0 && onBehalfOf != owner && allowanceBefore != max_uint256 => allowance ownder => onBehalfOf should decrease by finalShares
+        assert(finalShares != 0 && onBehalfOf != owner && allowanceOnBehalfForOwnerBefore != max_uint256 => allowanceOnBehalfForOwnerBefore - finalShares == to_mathint(allowanceOnBehalfForOwnerAfter), "Allowance owner => onBehalfOf should decrease by finalShares");
+
+        //assert2: if allowanceBefore = max_uint256, allowance should stay the same
+        assert(allowanceOnBehalfForOwnerBefore == max_uint256 => allowanceOnBehalfForOwnerBefore == allowanceOnBehalfForOwnerAfter, "Allowance owner => onBehalfOf should stay the same");
+
+        //assert3: allowance owner => otherUser should not change
+        assert(allowanceOtherUserForOwnerBefore == allowanceOtherUserForOwnerAfter, "Allowance owner => otherUser should not change");
+
+        //assert4: allowance otherUser => onBehalfe should not change 
+        assert(allowanceOtherUserForOnBehalfOfBefore == allowanceOtherUserForOnBehalfOfAfter, "Allowance otherUser => onBehalfOf should not change");
+
+        //assert5: allowance otherUser => owner should not change
+        assert(allowanceOwnerForOtherUserBefore == allowanceOwnerForOtherUserAfter, "Allowance otherUser => owner should not change");
+
+        //assert6: allowance onBehalfOf => otherUser should not change
+        assert(allowanceOnBehalfOfForOtherUserBefore == allowanceOnBehalfOfForOtherUserAfter, "Allowance onBehalfOf => otherUser should not change");
+
+        //assert7: allowance onBehalfOf => owner should not change
+        assert(allowanceOwnerForOnBehalfOfBefore == allowanceOwnerForOnBehalfOfAfter, "Allowance owner => onBehalfOf should not change");
+    }
+
+    //redeem works
+    rule redeemWorks(env e){
+        //FUNCTION PARAMETER
+        uint256 amount;
+        require(amount <= max_uint112);
+        Type.Shares amountInShares = uintToSharesHarness(amount);
+        address receiver;
+        require(receiver != currentContract);
+        address owner;
+        address otherUser;
+        require(otherUser != receiver && otherUser != owner && otherUser != currentContract);
+        address onBehalfOf = actualCaller(e);
+
+        //VALUES BEFORE
+        Type.VaultCache vaultCacheBefore = getCurrentVaultCacheHarness();
+        address collateral = vaultCacheBefore.asset;
+        require(collateral == VaultAsset);
+
+        //Balances shares before
+        Type.Assets cashBefore = vaultCacheBefore.cash;
+        mathint totalSharesBefore = totalSharesGhost;
+        Type.Shares sharesOwnerBefore = shareBalanceGhost[owner]; //i: to fix issue with mathint, is the same value as shareBalanceGhost[owner]
+        // Type.Shares sharesOwnerAsSharesBefore = uintToSharesHarness(sharesOwnerBefore);
+        mathint sharesReceiverBefore = shareBalanceGhost[receiver];
+        mathint sharesOtherUserBefore = shareBalanceGhost[otherUser];
+        //Balances collateral before
+        uint256 balanceReceiverBefore = VaultAsset.balanceOf(e,receiver);
+        uint256 balanceOtherUserBefore = VaultAsset.balanceOf(e,otherUser);
+        uint256 balanceVaultBefore = VaultAsset.balanceOf(e,currentContract);
+
+        //FINAL VALUES
+        Type.Shares finalShares = amount == max_uint256 ? sharesOwnerBefore : amountInShares;
+        Type.Assets finalAssets = sharesToAssetsDownHarness(finalShares, vaultCacheBefore);
+
+        //FUNCTION CALL
+        uint256 returnValueCall = redeem(e, amount, receiver, owner);
+
+        //VALUES AFTER
+        Type.VaultCache vaultCacheAfter = getCurrentVaultCacheHarness();
+        //Balances shares after
+        mathint totalSharesAfter = totalSharesGhost;
+        mathint sharesOwnerAfter = shareBalanceGhost[owner];
+        mathint sharesReceiverAfter = shareBalanceGhost[receiver];
+        mathint sharesOtherUserAfter = shareBalanceGhost[otherUser];
+        //Balances collateral after
+        uint256 balanceReceiverAfter = VaultAsset.balanceOf(e,receiver);
+        uint256 balanceOtherUserAfter = VaultAsset.balanceOf(e,otherUser);
+        uint256 balanceVaultAfter = VaultAsset.balanceOf(e,currentContract);
+
+        //ASSERTS
+        //assert1: if amount = 0, the returnValueCall should be 0
+        assert(amount == 0 => returnValueCall == 0, "Return value should be 0 if amount is 0");
+
+        //assert2: if finalShares != 0, sharesOwner should decrease by finalShares
+        assert(finalShares != 0 => sharesOwnerBefore - finalShares == to_mathint(sharesOwnerAfter), "Shares of owner should decrease by finalShares");
+
+        //assert3: if finalShares != 0, totalShares should decrease by finalShares
+        assert(finalShares != 0 => totalSharesBefore - finalShares == to_mathint(totalSharesAfter), "Total shares should decrease by finalShares");
+
+        //assert4: sharesOtherUser should not change
+        assert(sharesOtherUserBefore == sharesOtherUserAfter, "Shares of other user should not change");
+
+        //assert5: if finalShares != 0, balanceOf receiver should increase by finalAssets
+        assert(finalShares != 0 => balanceReceiverBefore + finalAssets == to_mathint(balanceReceiverAfter), "Balance of receiver should increase by amount");
+
+        //assert6: balanceOf otherUser should stay the same
+        assert(balanceOtherUserBefore == balanceOtherUserAfter, "Balance of other user should stay the same");
+
+        //assert7: if finalShares != 0, balanceOf currentContract should decrease by finalAssets
+        assert(finalShares != 0 => balanceVaultBefore - finalAssets == to_mathint(balanceVaultAfter), "Balance of currentContract should decrease by amount");
+
+        //assert8: if finalShares != 0, cash of vault should decrease by finalAssets
+        assert(finalShares != 0 => vaultCacheBefore.cash - finalAssets == to_mathint(vaultCacheAfter.cash), "Cash of vault should decrease by finalAssets");
+    }
+
+        //withdraw works allowances
+    rule withdrawWorksAllowancesAssert2To7(env e){
+        //FUNCTION PARAMETER
+        uint256 amount;
+        require(amount <= max_uint112);
+        Type.Shares amountInShares = uintToSharesHarness(amount);
+        address receiver;
+        address owner;
+        address otherUser;
+        address onBehalfOf = actualCaller(e);
+        require(otherUser != owner && otherUser != onBehalfOf);
+        require(onBehalfOf != owner);
+
+        //VALUES BEFORE
+        Type.VaultCache vaultCacheBefore = getCurrentVaultCacheHarness();
+        address collateral = vaultCacheBefore.asset;
+        require(collateral == VaultAsset);
+        //Balances shares before
+        Type.Shares sharesOwnerBefore = shareBalanceGhost[owner]; 
+        //Allownace before
+        uint256 allowanceOnBehalfForOwnerBefore = shareAllowanceGhost[owner][onBehalfOf]; //i: owner => onBehalfOf
+        uint256 allowanceOnBehalfOfForOtherUserBefore = shareAllowanceGhost[otherUser][onBehalfOf]; //i: otherUser => onBehalfOf
+        uint256 allowanceOtherUserForOwnerBefore = shareAllowanceGhost[owner][otherUser]; //i: owner => otherUser
+        uint256 allowanceOtherUserForOnBehalfOfBefore = shareAllowanceGhost[onBehalfOf][otherUser]; //i: onBehalfOf => otherUser
+        uint256 allowanceOwnerForOnBehalfOfBefore = shareAllowanceGhost[onBehalfOf][owner]; //i: onBehalfOf => owner
+        uint256 allowanceOwnerForOtherUserBefore = shareAllowanceGhost[otherUser][owner]; //i: otherUser => owner
+
+
+        //FINAL VALUES
+        Type.Assets finalAssets = uintToAssetsHarness(amount);
+        Type.Shares finalShares = assetsToSharesUpHarness(finalAssets, vaultCacheBefore);
+
+        //FUNCTION CALL
+        uint256 returnValueCall = withdraw(e, amount, receiver, owner);
+
+        //VALUES AFTER
+        Type.VaultCache vaultCacheAfter = getCurrentVaultCacheHarness();
+        //Allownace after
+        uint256 allowanceOnBehalfForOwnerAfter = shareAllowanceGhost[owner][onBehalfOf]; //i: ownder => onBehalfOf
+        uint256 allowanceOtherUserForOwnerAfter = shareAllowanceGhost[owner][otherUser]; //i: owner => otherUser
+        uint256 allowanceOnBehalfOfForOtherUserAfter = shareAllowanceGhost[otherUser][onBehalfOf]; //i: otherUser => onBehalfOf
+        uint256 allowanceOtherUserForOnBehalfOfAfter = shareAllowanceGhost[onBehalfOf][otherUser]; //i: onBehalfOf => otherUser
+        uint256 allowanceOwnerForOnBehalfOfAfter = shareAllowanceGhost[onBehalfOf][owner]; //i: onBehalfOf => owner
+        uint256 allowanceOwnerForOtherUserAfter = shareAllowanceGhost[otherUser][owner]; //i: otherUser => owner
+
+        //ASSERTS
+        //assert2: if allowanceBefore = max_uint256, allowance should stay the same
+        assert(allowanceOnBehalfForOwnerBefore == max_uint256 => allowanceOnBehalfForOwnerBefore == allowanceOnBehalfForOwnerAfter, "Allowance owner => onBehalfOf should stay the same");
+
+        //assert3: allowance owner => otherUser should not change
+        assert(allowanceOtherUserForOwnerBefore == allowanceOtherUserForOwnerAfter, "Allowance owner => otherUser should not change");
+
+        //assert4: allowance otherUser => onBehalfe should not change 
+        assert(allowanceOtherUserForOnBehalfOfBefore == allowanceOtherUserForOnBehalfOfAfter, "Allowance otherUser => onBehalfOf should not change");
+
+        //assert5: allowance otherUser => owner should not change
+        assert(allowanceOwnerForOtherUserBefore == allowanceOwnerForOtherUserAfter, "Allowance otherUser => owner should not change");
+
+        //assert6: allowance onBehalfOf => otherUser should not change
+        assert(allowanceOnBehalfOfForOtherUserBefore == allowanceOnBehalfOfForOtherUserAfter, "Allowance onBehalfOf => otherUser should not change");
+
+        //assert7: allowance onBehalfOf => owner should not change
+        assert(allowanceOwnerForOnBehalfOfBefore == allowanceOwnerForOnBehalfOfAfter, "Allowance owner => onBehalfOf should not change");
+        
+    }
+
+     //withdraw works allowances
+    rule withdrawWorksAllowancesAssert1(env e){
+        //FUNCTION PARAMETER
+        uint256 amount;
+        require(amount <= max_uint112);
+        Type.Shares amountInShares = uintToSharesHarness(amount);
+        address receiver;
+        address owner;
+        address otherUser;
+        address onBehalfOf = actualCaller(e);
+        require(otherUser != owner && otherUser != onBehalfOf);
+        require(onBehalfOf != owner);
+
+        //VALUES BEFORE
+        Type.VaultCache vaultCacheBefore = getCurrentVaultCacheHarness();
+        address collateral = vaultCacheBefore.asset;
+        require(collateral == VaultAsset);
+        //Balances shares before
+        Type.Shares sharesOwnerBefore = shareBalanceGhost[owner]; 
+        //Allownace before
+        uint256 allowanceOnBehalfForOwnerBefore = shareAllowanceGhost[owner][onBehalfOf]; //i: owner => onBehalfOf
+        uint256 allowanceOnBehalfOfForOtherUserBefore = shareAllowanceGhost[otherUser][onBehalfOf]; //i: otherUser => onBehalfOf
+        uint256 allowanceOtherUserForOwnerBefore = shareAllowanceGhost[owner][otherUser]; //i: owner => otherUser
+        uint256 allowanceOtherUserForOnBehalfOfBefore = shareAllowanceGhost[onBehalfOf][otherUser]; //i: onBehalfOf => otherUser
+        uint256 allowanceOwnerForOnBehalfOfBefore = shareAllowanceGhost[onBehalfOf][owner]; //i: onBehalfOf => owner
+        uint256 allowanceOwnerForOtherUserBefore = shareAllowanceGhost[otherUser][owner]; //i: otherUser => owner
+
+
+        //FINAL VALUES
+        Type.Assets finalAssets = uintToAssetsHarness(amount);
+        Type.Shares finalShares = assetsToSharesUpHarness(finalAssets, vaultCacheBefore);
+
+        //FUNCTION CALL
+        uint256 returnValueCall = withdraw(e, amount, receiver, owner);
+
+        //VALUES AFTER
+        Type.VaultCache vaultCacheAfter = getCurrentVaultCacheHarness();
+        //Allownace after
+        uint256 allowanceOnBehalfForOwnerAfter = shareAllowanceGhost[owner][onBehalfOf]; //i: ownder => onBehalfOf
+        uint256 allowanceOtherUserForOwnerAfter = shareAllowanceGhost[owner][otherUser]; //i: owner => otherUser
+        uint256 allowanceOnBehalfOfForOtherUserAfter = shareAllowanceGhost[otherUser][onBehalfOf]; //i: otherUser => onBehalfOf
+        uint256 allowanceOtherUserForOnBehalfOfAfter = shareAllowanceGhost[onBehalfOf][otherUser]; //i: onBehalfOf => otherUser
+        uint256 allowanceOwnerForOnBehalfOfAfter = shareAllowanceGhost[onBehalfOf][owner]; //i: onBehalfOf => owner
+        uint256 allowanceOwnerForOtherUserAfter = shareAllowanceGhost[otherUser][owner]; //i: otherUser => owner
+
+        //ASSERTS
+        //assert1: if finalShares != 0 && onBehalfOf != owner && allowanceBefore != max_uint256 => allowance ownder => onBehalfOf should decrease by finalShares
+        assert(finalAssets != 0 && onBehalfOf != owner && allowanceOnBehalfForOwnerBefore != max_uint256 => allowanceOnBehalfForOwnerBefore - finalShares == to_mathint(allowanceOnBehalfForOwnerAfter), "Allowance owner => onBehalfOf should decrease by finalShares");
+    }
+
+    //withdraw works
+    rule withdrawWorks(env e){
+        //FUNCTION PARAMETER
+        uint256 amount;
+        address receiver;
+        require(receiver != currentContract);
+        address owner;
+        address otherUser;
+        require(otherUser != receiver && otherUser != owner && otherUser != currentContract);
+        address onBehalfOf = actualCaller(e);
+
+        //VALUES BEFORE
+        Type.VaultCache vaultCacheBefore = getCurrentVaultCacheHarness();
+        address collateral = vaultCacheBefore.asset;
+        require(collateral == VaultAsset);
+        //Balances shares before
+        Type.Assets cashBefore = vaultCacheBefore.cash;
+        mathint totalSharesBefore = totalSharesGhost;
+        mathint sharesOwnerBefore = shareBalanceGhost[owner];
+        mathint sharesReceiverBefore = shareBalanceGhost[receiver];
+        mathint sharesOtherUserBefore = shareBalanceGhost[otherUser];
+        //Balances collateral before
+        uint256 balanceReceiverBefore = VaultAsset.balanceOf(e,receiver);
+        uint256 balanceOtherUserBefore = VaultAsset.balanceOf(e,otherUser);
+        uint256 balanceVaultBefore = VaultAsset.balanceOf(e,currentContract);
+
+        //FINAL VALUES
+        Type.Assets finalAssets = uintToAssetsHarness(amount);
+        Type.Shares finalShares = assetsToSharesUpHarness(finalAssets, vaultCacheBefore);
+
+        //FUNCTION CALL
+        uint256 returnValueCall = withdraw(e, amount, receiver, owner);
+
+        //VALUES AFTER
+        Type.VaultCache vaultCacheAfter = getCurrentVaultCacheHarness();
+        //Balances shares after
+        mathint totalSharesAfter = totalSharesGhost;
+        mathint sharesOwnerAfter = shareBalanceGhost[owner];
+        mathint sharesReceiverAfter = shareBalanceGhost[receiver];
+        mathint sharesOtherUserAfter = shareBalanceGhost[otherUser];
+        //Balances collateral after
+        uint256 balanceReceiverAfter = VaultAsset.balanceOf(e,receiver);
+        uint256 balanceOtherUserAfter = VaultAsset.balanceOf(e,otherUser);
+        uint256 balanceVaultAfter = VaultAsset.balanceOf(e,currentContract);
+
+        //ASSERTS
+        //assert1: if amount = 0, the returnValueCall should be 0
+        assert(amount == 0 => returnValueCall == 0, "Return value should be 0 if amount is 0");
+
+        //assert2: if finalAssets != 0, sharesOwner should decrease by finalShares
+        assert(finalAssets != 0 => sharesOwnerBefore - finalShares == to_mathint(sharesOwnerAfter), "Shares of owner should decrease by finalShares");
+
+        //assert3: if finalAssets != 0, totalShares should decrease by finalShares
+        assert(finalAssets != 0 => totalSharesBefore - finalShares == to_mathint(totalSharesAfter), "Total shares should decrease by finalShares");
+
+        //assert4: sharesOtherUser should not change
+        assert(sharesOtherUserBefore == sharesOtherUserAfter, "Shares of other user should not change");
+
+        //assert5: if finalAssets != 0, balanceOf receiver should increase by finalAssets
+        assert(finalAssets != 0 => balanceReceiverBefore + amount == to_mathint(balanceReceiverAfter), "Balance of receiver should increase by amount");
+
+        //assert6: balanceOf otherUser should stay the same
+        assert(balanceOtherUserBefore == balanceOtherUserAfter, "Balance of other user should stay the same");
+
+        //assert7: if finalAssets != 0, balanceOf currentContract should decrease by finalAssets
+        assert(finalAssets != 0 => balanceVaultBefore - amount == to_mathint(balanceVaultAfter), "Balance of currentContract should decrease by amount");
+
+        //assert8: if finalAssets != 0, cash of vault should decrease by finalAssets
+        assert(finalAssets != 0 => vaultCacheBefore.cash - finalAssets == to_mathint(vaultCacheAfter.cash), "Cash of vault should decrease by finalAssets");
+    }
+
+    //skim works
+    rule skimWorks1(env e){
+        //FUNCTION PARAMETER
+        uint256 amount;
+        address receiver;
+        address otherUser;
+        require(otherUser != receiver);
+        Type.VaultCache vaultCacheBefore = getCurrentVaultCacheHarness();
+        address collateral = vaultCacheBefore.asset;
+        require(collateral == VaultAsset);
+        Type.Assets cashBefore = vaultCacheBefore.cash;
+
+        //VALUES BEFORE
+        mathint totalSharesBefore = totalSharesGhost;
+        mathint sharesReceiverBefore = shareBalanceGhost[receiver];
+        mathint sharesOtherUserBefore = shareBalanceGhost[otherUser];
+        //Balances before
+        uint256 balanceVaultBefore = VaultAsset.balanceOf(e,currentContract);
+        uint256 balanceReceiverBefore = VaultAsset.balanceOf(e,receiver);
+        uint256 balanceOtherUserBefore = VaultAsset.balanceOf(e,otherUser);
+        Type.Assets assetsAvailable = to_mathint(balanceVaultBefore) <= to_mathint(vaultCacheBefore.cash) ? 0 : uintToAssetsHarness(require_uint256(balanceVaultBefore - vaultCacheBefore.cash));
+
+        //FINAL VALUES
+        Type.Assets finalAssets = amount == max_uint256 ? assetsAvailable : uintToAssetsHarness(amount);
+        Type.Shares finalShares = assetsToSharesDownHarness(finalAssets, vaultCacheBefore);
+
+        //FUNCTION CALL
+        uint256 returnValueCall = skim(e, amount, receiver);
+
+        //VALUES AFTER
+        Type.VaultCache vaultCacheAfter = getCurrentVaultCacheHarness();
+        //Balances after
+        uint256 balanceVaultAfter = VaultAsset.balanceOf(e,currentContract);
+        uint256 balanceReceiverAfter = VaultAsset.balanceOf(e,receiver);
+        uint256 balanceOtherUserAfter = VaultAsset.balanceOf(e,otherUser);
+        mathint totalSharesAfter = totalSharesGhost;
+        mathint sharesReceiverAfter = shareBalanceGhost[receiver];
+        mathint sharesOtherUserAfter = shareBalanceGhost[otherUser];
+
+        //ASSERTS
+        //assert1: collateralBalance of currentContract should stay the same
+        assert(balanceVaultBefore == balanceVaultAfter, "Balance of currentContract should stay the same");
+
+        //assert2: Balance of receiver should stay the same
+        assert(balanceReceiverBefore == balanceReceiverAfter, "Balance of receiver should stay the same");
+
+        //assert3: Balance of otherUser should stay the same
+        assert(balanceOtherUserBefore == balanceOtherUserAfter, "Balance of otherUser should stay the same");
+
+        //assert4: if finalAssets = 0, the returnValueCall should be 0
+        assert(finalAssets == 0 => returnValueCall == 0, "Return value should be 0 if finalAssets is 0");
+
+    }
+
+    //skim works
+    rule skimWorks2(env e){
+        //FUNCTION PARAMETER
+        uint256 amount;
+        address receiver;
+        address otherUser;
+        require(otherUser != receiver);
+        Type.VaultCache vaultCacheBefore = getCurrentVaultCacheHarness();
+        address collateral = vaultCacheBefore.asset;
+        require(collateral == VaultAsset);
+        Type.Assets cashBefore = vaultCacheBefore.cash;
+
+        //VALUES BEFORE
+        mathint totalSharesBefore = totalSharesGhost;
+        mathint sharesReceiverBefore = shareBalanceGhost[receiver];
+        mathint sharesOtherUserBefore = shareBalanceGhost[otherUser];
+        //Balances before
+        uint256 balanceVaultBefore = VaultAsset.balanceOf(e,currentContract);
+        uint256 balanceReceiverBefore = VaultAsset.balanceOf(e,receiver);
+        uint256 balanceOtherUserBefore = VaultAsset.balanceOf(e,otherUser);
+        Type.Assets assetsAvailable = to_mathint(balanceVaultBefore) <= to_mathint(vaultCacheBefore.cash) ? 0 : uintToAssetsHarness(require_uint256(balanceVaultBefore - vaultCacheBefore.cash));
+
+        //FINAL VALUES
+        Type.Assets finalAssets = amount == max_uint256 ? assetsAvailable : uintToAssetsHarness(amount);
+        Type.Shares finalShares = assetsToSharesDownHarness(finalAssets, vaultCacheBefore);
+
+        //FUNCTION CALL
+        uint256 returnValueCall = skim(e, amount, receiver);
+
+        //VALUES AFTER
+        Type.VaultCache vaultCacheAfter = getCurrentVaultCacheHarness();
+        //Balances after
+        uint256 balanceVaultAfter = VaultAsset.balanceOf(e,currentContract);
+        uint256 balanceReceiverAfter = VaultAsset.balanceOf(e,receiver);
+        uint256 balanceOtherUserAfter = VaultAsset.balanceOf(e,otherUser);
+        mathint totalSharesAfter = totalSharesGhost;
+        mathint sharesReceiverAfter = shareBalanceGhost[receiver];
+        mathint sharesOtherUserAfter = shareBalanceGhost[otherUser];
+
+        //ASSERTS
+        //assert5: finalAssets !=0 => vaultChash should be increased by finalAssets
+        assert(finalAssets != 0 => vaultCacheBefore.cash + finalAssets == to_mathint(vaultCacheAfter.cash), "Cash of vault should increase by finalAssets");
+
+        //assert6: finalAssets !=0 => totalShares should increase by finalShares
+        assert(finalAssets != 0 => totalSharesBefore + finalShares == to_mathint(totalSharesAfter), "Total shares should increase by finalShares");
+
+        //assert7: finalAssets !=0 => receiverShares should be increased by finalShares
+        assert(finalAssets != 0 => sharesReceiverBefore + finalShares == to_mathint(sharesReceiverAfter), "Shares of receiver should increase by finalShares");
+
+        //assert8: otherUserShares should stay the same
+        assert(sharesOtherUserBefore == sharesOtherUserAfter, "Shares of other user should stay the same");
+    }
+    
     //deposit works
     rule depositWorks(env e){
         //FUNCTION PARAMETER
@@ -23,6 +745,7 @@ use builtin rule sanity;
         address receiver;
         require(receiver != currentContract);
         address onBehalfOf = actualCaller(e);
+        require(onBehalfOf != currentContract);
         address otherUser;
         require(otherUser != receiver && otherUser != currentContract && otherUser != onBehalfOf);
         uint256 balanceOnBehalfOfBefore = VaultAsset.balanceOf(e,onBehalfOf);
@@ -46,10 +769,6 @@ use builtin rule sanity;
         mathint sharesReceiverBefore = shareBalanceGhost[receiver];
         mathint totalSharesBefore = totalSharesGhost;
 
-
-
-
-
         //FUNCTION CALL
         uint256 returnValueCall = deposit(e, amount, receiver);
 
@@ -65,11 +784,11 @@ use builtin rule sanity;
 
 
         //ASSERTS
-        // //assert1: balanceOf other user does not change
-        // assert(balanceOtherUserBefore == balanceOtherUserAfter, "Balance of other user should not change");
+        //assert1: balanceOf other user does not change
+        assert(balanceOtherUserBefore == balanceOtherUserAfter, "Balance of other user should not change");
 
-        // //assert2: finalAssets != 0 => balanceOf onBehalfOf should decrease by finalAssetsUint
-        // assert(finalAssets != 0 => balanceOnBehalfOfBefore - finalAssetsUint == to_mathint(balanceOnBehalfOfAfter), "Balance of onBehalfOf should decrease by finalAssetsUint");
+        //assert2: finalAssets != 0 => balanceOf onBehalfOf should decrease by finalAssetsUint
+        assert(finalAssets != 0 => balanceOnBehalfOfBefore - finalAssetsUint == to_mathint(balanceOnBehalfOfAfter), "Balance of onBehalfOf should decrease by finalAssetsUint");
 
         //assert3: finalAssets != 0 => balance of currentContract should increase by finalAssetsUint
         assert(finalAssets != 0 => balanceCurrentContractBefore + finalAssetsUint == to_mathint(balanceCurrentContractAfter), "Balance of currentContract should increase by finalAssetsUint");
@@ -89,24 +808,207 @@ use builtin rule sanity;
         //assert8: return value is 0 if finalAssets is 0
         assert(finalAssets == 0 => returnValueCall == 0, "Return value should be 0 if finalAssets is 0");
 
-        //assert9: return value is sharesUint if finalAssets is not 0
-        assert(finalAssets != 0 => returnValueCall == sharesUint, "Return value should be sharesUint if finalAssets is not 0");
-
-
-
-
+        // //assert9: return value is sharesUint if finalAssets is not 0 //@audit times out on its own
+        // assert(finalAssets != 0 => returnValueCall == sharesUint, "Return value should be sharesUint if finalAssets is not 0");
     }
 
+    //mint works
+    rule mintWorks(env e){
+        //FUNCTION PARAMETER
+        uint256 amount; //i: shares to be minted
+        address receiver;
+        require(receiver != currentContract);
+        address onBehalfOf = actualCaller(e);
+        require(onBehalfOf != currentContract);
+        address otherUser;
+        require(otherUser != receiver && otherUser != currentContract && otherUser != onBehalfOf);
+        uint256 balanceOnBehalfOfBefore = VaultAsset.balanceOf(e,onBehalfOf);
+        Type.VaultCache vaultCacheBefore = getCurrentVaultCacheHarness();
+        //final Values
+        Type.Shares finalShares = uintToSharesHarness(amount);
+        Type.Assets finalAssets = shareToAssetsUpHarness(finalShares, vaultCacheBefore);
+        uint256 finalAssetsUint = assetsToUintHarness(finalAssets);
+
+        //VALUES BEFORE
+        address collateral = vaultCacheBefore.asset;
+        require(collateral == VaultAsset); 
+
+        //Balances before
+        uint256 balanceCurrentContractBefore = VaultAsset.balanceOf(e,currentContract);
+        uint256 balanceOtherUserBefore = VaultAsset.balanceOf(e,otherUser);
+        mathint sharesOtherUserBefore = shareBalanceGhost[otherUser];
+        mathint sharesReceiverBefore = shareBalanceGhost[receiver];
+        mathint totalSharesBefore = totalSharesGhost;
+
+        //FUNCTION CALL
+        uint256 returnValueCall = mint(e, amount, receiver);
+
+        //VALUES AFTER
+        Type.VaultCache vaultCacheAfter = getCurrentVaultCacheHarness();
+        //Balances after
+        uint256 balanceOnBehalfOfAfter = VaultAsset.balanceOf(e,onBehalfOf);
+        uint256 balanceCurrentContractAfter = VaultAsset.balanceOf(e,currentContract);
+        uint256 balanceOtherUserAfter = VaultAsset.balanceOf(e,otherUser);
+        mathint sharesOtherUserAfter = shareBalanceGhost[otherUser];
+        mathint sharesReceiverAfter = shareBalanceGhost[receiver];
+        mathint totalSharesAfter = totalSharesGhost;
 
 
-//------------------------------- RULES TEST END ----------------------------------
+        //ASSERTS
+        //assert1: balanceOf other user does not change
+        assert(balanceOtherUserBefore == balanceOtherUserAfter, "Balance of other user should not change");
 
-//------------------------------- RULES PROBLEMS START ----------------------------------
+        //assert2: finalShares != 0 => balanceOf onBehalfOf should decrease by finalAssetsUint
+        assert(finalShares != 0 => balanceOnBehalfOfBefore - finalAssetsUint == to_mathint(balanceOnBehalfOfAfter), "Balance of onBehalfOf should decrease by finalAssetsUint");
 
-//------------------------------- RULES PROBLEMS START ----------------------------------
+        //assert3: finalShares != 0 => balance of currentContract should increase by finalAssetsUint
+        assert(finalShares != 0 => balanceCurrentContractBefore + finalAssetsUint == to_mathint(balanceCurrentContractAfter), "Balance of currentContract should increase by finalAssetsUint");
 
-//------------------------------- RULES OK START ------------------------------------
-   
+        //assert4: finalShares != 0 => cash of vault should increase by finalAssets
+        assert(finalShares != 0 => vaultCacheBefore.cash + finalAssets == to_mathint(vaultCacheAfter.cash), "Cash of vault should increase by finalAssets");
+
+        //assert5: share of other user should not change
+        assert(sharesOtherUserBefore == sharesOtherUserAfter, "Shares of other user should not change");
+
+        //assert6: finalShares != 0 =>share of receiver should increase by finalShares
+        assert(finalShares != 0 => sharesReceiverBefore + finalShares == sharesReceiverAfter, "Shares of receiver should increase by finalShares");
+
+        //assert7: finalShares != 0 => totalShares should increase by finalShares
+        assert(finalShares != 0 => totalSharesBefore + finalShares == totalSharesAfter, "Total shares should increase by finalShares");
+
+        //assert8: return value is 0 if finalShares is 0
+        assert(finalShares == 0 => returnValueCall == 0, "Return value should be 0 if finalAssets is 0");
+
+        // //assert9: return value is sharesUint if finalAssets is not 0 //@audit times out on its own
+        // assert(finalAssets != 0 => returnValueCall == sharesUint, "Return value should be sharesUint if finalAssets is not 0");
+    }
+
+    //transfer works
+    rule transferWorks(env e){
+        //FUNCTION PARAMETER
+        address to;
+        uint256 amount;
+        address otherUser1;
+        address otherUser2;
+        Type.Shares finalShares = uintToSharesHarness(amount);
+        address from = actualCaller(e); //i: onBahalfOf  address
+        require(otherUser1 != to && otherUser1 != from);
+        require(from != to);
+
+        //VALUES BEFORE
+        //shares before
+        Type.Shares sharesFromBefore = shareBalanceGhost[from];
+        Type.Shares sharesToBefore = shareBalanceGhost[to];
+        Type.Shares sharesOtherUser1Before = shareBalanceGhost[otherUser1];
+
+        //allowance before
+        uint256 allowanceOtherUser1ForOtherUser2 = shareAllowanceGhost[otherUser1][otherUser2]; //i: otherUser1 => otherUser2 covers any change in allowance 
+
+        //FUNCTION CALL
+        bool returnValueCall= transfer(e, to, amount);
+
+        //VALUES AFTER
+        //shares after
+        Type.Shares sharesFromAfter = shareBalanceGhost[from];
+        Type.Shares sharesToAfter = shareBalanceGhost[to];
+        Type.Shares sharesOtherUser1After = shareBalanceGhost[otherUser1];
+
+        //allowance after
+        uint256 allowanceOtherUser1ForOtherUser2After = shareAllowanceGhost[otherUser1][otherUser2]; //i: otherUser1 => otherUser2 covers any change in allowance
+
+        //ASSERTS
+        //assert1: returnValueCall should be true
+        assert(returnValueCall == true, "Return value should be true");
+
+        //assert2: allowance should not change
+        assert(allowanceOtherUser1ForOtherUser2 == allowanceOtherUser1ForOtherUser2After, "Allowance should not change");
+
+        //assert3: shares should decrease for from by finalShares
+        assert(sharesFromBefore - finalShares == to_mathint(sharesFromAfter), "Shares of from should decrease by finalShares");
+
+        //assert4: shares should increase for to by finalShares
+        assert(sharesToBefore + finalShares == to_mathint(sharesToAfter), "Shares of to should increase by finalShares");
+
+        //assert5: shares should not change for otherUser1
+        assert(sharesOtherUser1Before == sharesOtherUser1After, "Shares of otherUser1 should not change");
+    } 
+
+    //transferFrom works
+    rule transferFromWorks(env e){
+        //FUNCTION PARAMETER
+        address from;
+        address to;
+        uint256 amount;
+        address otherUser;
+        Type.Shares finalShares = uintToSharesHarness(amount);
+        address onBahalfOf = actualCaller(e); //i: onBahalfOf  address
+        require(otherUser != from && otherUser != onBahalfOf && otherUser != to);
+        require(from != to && from != onBahalfOf);
+
+        //VALUES BEFORE
+        //shares before
+        Type.Shares sharesFromBefore = shareBalanceGhost[from];
+        Type.Shares sharesToBefore = shareBalanceGhost[to];
+        Type.Shares sharesotherUserBefore = shareBalanceGhost[otherUser];
+
+        //allowance before
+        uint256 allowanceotherUserForOnBehalfOfBefore = shareAllowanceGhost[otherUser][onBahalfOf]; //i: otherUser => onBahalfOf
+        uint256 allowanceotherUserForFromBefore = shareAllowanceGhost[otherUser][from]; //i: otherUser => from
+        uint256 allowanceFromForOnBehalfOfBefore = shareAllowanceGhost[from][onBahalfOf]; //i: from => onBahalfOf 
+        uint256 allowanceFromForotherUserBefore = shareAllowanceGhost[from][otherUser]; //i: from => otherUser
+        uint256 allowanceOnBehalfOfForotherUserBefore = shareAllowanceGhost[onBahalfOf][otherUser]; //i: onBahalfOf => otherUser
+        uint256 allowanceOnBahalfOfForFromBefore = shareAllowanceGhost[onBahalfOf][from]; //i: onBahalfOf => from
+
+        //FUNCTION CALL
+        bool returnValueCall= transferFrom(e, from, to, amount);
+
+        //VALUES AFTER
+        //shares after
+        Type.Shares sharesFromAfter = shareBalanceGhost[from];
+        Type.Shares sharesToAfter = shareBalanceGhost[to];
+        Type.Shares sharesotherUserAfter = shareBalanceGhost[otherUser];
+
+        //allowance after
+        uint256 allowanceotherUserForOnBehalfOfAfter = shareAllowanceGhost[otherUser][onBahalfOf]; //i: otherUser => onBahalfOf
+        uint256 allowanceotherUserForFromAfter = shareAllowanceGhost[otherUser][from]; //i: otherUser => from
+        uint256 allowanceFromForOnBehalfOfAfter = shareAllowanceGhost[from][onBahalfOf]; //i: from => onBahalfOf
+        uint256 allowanceFromForotherUserAfter = shareAllowanceGhost[from][otherUser]; //i: from => otherUser
+        uint256 allowanceOnBahalfOfForotherUserAfter = shareAllowanceGhost[onBahalfOf][otherUser]; //i: onBahalfOf => otherUser
+        uint256 allowanceOnBahalfOfForFromAfter = shareAllowanceGhost[onBahalfOf][from]; //i: onBahalfOf => from
+    
+        //ASSERTS
+        //assert1: returnValueCall should be true
+        assert(returnValueCall == true, "Return value should be true");
+  
+
+        //assert3: shares should decrease for from by finalShares
+        assert(sharesFromBefore - finalShares == to_mathint(sharesFromAfter), "Shares of from should decrease by finalShares");
+
+        //assert4: shares should increase for to by finalShares
+        assert(sharesToBefore + finalShares == to_mathint(sharesToAfter), "Shares of to should increase by finalShares");
+
+        //assert5: shares should not change for otherUser
+        assert(sharesotherUserBefore == sharesotherUserAfter, "Shares of otherUser should not change");
+
+        //assert6: if allowanceFromForOnBehalfOf != max_uint256, allowance should decrease by finalShares
+        assert(allowanceFromForOnBehalfOfBefore != max_uint256 => allowanceFromForOnBehalfOfBefore - finalShares == to_mathint(allowanceFromForOnBehalfOfAfter), "Allowance from => onBehalfOf should decrease by finalShares");
+
+        //assert7: if allowanceFromForOnBehalfOf = max_uint256, allowance should stay the same
+        assert(allowanceFromForOnBehalfOfBefore == max_uint256 => allowanceFromForOnBehalfOfBefore == allowanceFromForOnBehalfOfAfter, "Allowance from => onBehalfOf should stay the same");
+
+        //assert8: allowance should not change for otherUser
+        assert(allowanceotherUserForFromBefore == allowanceotherUserForFromAfter
+        && allowanceotherUserForOnBehalfOfBefore == allowanceotherUserForOnBehalfOfAfter,
+        "Allowance otherUser => from/onBehalfOf should not change");
+
+        //assert9: allowance should not change for onBehalfOf
+        assert(allowanceOnBahalfOfForFromBefore == allowanceOnBahalfOfForFromAfter
+        && allowanceOnBehalfOfForotherUserBefore == allowanceOnBahalfOfForotherUserAfter,
+        "Allowance onBehalfOf => from/otherUser should not change");
+
+        //assert10: allowance from => otherUser should not change
+        assert(allowanceFromForotherUserBefore == allowanceFromForotherUserAfter, "Allowance from => otherUser should not change");
+    } 
 
 //------------------------------- RULES OK END ------------------------------------
 
@@ -117,6 +1019,67 @@ use builtin rule sanity;
 //------------------------------- ISSUES OK START-------------------------------
 
 //------------------------------- ISSUES OK END-------------------------------
+//--------------------------------- PUBLIC MUTATION START-----------------------
+
+  //skim works
+    rule skimWorks3(env e){
+        //FUNCTION PARAMETER
+        uint256 amount;
+        // require(amount == max_uint256);//@audit to be able to see valid run
+        address receiver;
+        address otherUser;
+        require(otherUser != receiver);
+        Type.VaultCache vaultCacheBefore = getCurrentVaultCacheHarness();
+        address collateral = vaultCacheBefore.asset;
+        require(collateral == VaultAsset);
+        Type.Assets cashBefore = vaultCacheBefore.cash;
+
+        //VALUES BEFORE
+        mathint totalSharesBefore = totalSharesGhost;
+        mathint sharesReceiverBefore = shareBalanceGhost[receiver];
+        mathint sharesOtherUserBefore = shareBalanceGhost[otherUser];
+        //Balances before
+        uint256 balanceVaultBefore = VaultAsset.balanceOf(e,currentContract);
+        require(balanceVaultBefore != 0);//@audit to be able to see valid run
+        uint256 balanceReceiverBefore = VaultAsset.balanceOf(e,receiver);
+        uint256 balanceOtherUserBefore = VaultAsset.balanceOf(e,otherUser);
+        Type.Assets assetsAvailable = to_mathint(balanceVaultBefore) <= to_mathint(vaultCacheBefore.cash) ? 0 : uintToAssetsHarness(require_uint256(balanceVaultBefore - vaultCacheBefore.cash));
+
+        //FINAL VALUES
+        Type.Assets finalAssets = amount == max_uint256 ? assetsAvailable : uintToAssetsHarness(amount);
+        Type.Shares finalShares = assetsToSharesDownHarness(finalAssets, vaultCacheBefore);
+
+        //FUNCTION CALL
+        uint256 returnValueCall = skim(e, amount, receiver);
+
+        //VALUES AFTER
+        Type.VaultCache vaultCacheAfter = getCurrentVaultCacheHarness();
+        //Balances after
+        uint256 balanceVaultAfter = VaultAsset.balanceOf(e,currentContract);
+        uint256 balanceReceiverAfter = VaultAsset.balanceOf(e,receiver);
+        uint256 balanceOtherUserAfter = VaultAsset.balanceOf(e,otherUser);
+        mathint totalSharesAfter = totalSharesGhost;
+        mathint sharesReceiverAfter = shareBalanceGhost[receiver];
+        mathint sharesOtherUserAfter = shareBalanceGhost[otherUser];
+
+        //ASSERTS
+        //assert5: finalAssets !=0 => vaultChash should be increased by finalAssets
+        assert(finalAssets != 0 => vaultCacheBefore.cash + finalAssets == to_mathint(vaultCacheAfter.cash), "Cash of vault should increase by finalAssets");
+
+        // assert(false);
+
+
+        // //assert6: finalAssets !=0 => totalShares should increase by finalShares
+        // assert(finalAssets != 0 => totalSharesBefore + finalShares == to_mathint(totalSharesAfter), "Total shares should increase by finalShares");
+
+        // //assert7: finalAssets !=0 => receiverShares should be increased by finalShares
+        // assert(finalAssets != 0 => sharesReceiverBefore + finalShares == to_mathint(sharesReceiverAfter), "Shares of receiver should increase by finalShares");
+
+        // //assert8: otherUserShares should stay the same
+        // assert(sharesOtherUserBefore == sharesOtherUserAfter, "Shares of other user should stay the same");
+    }
+
+//--------------------------------- PUBLIC MUTATION END-----------------------
 
 
 

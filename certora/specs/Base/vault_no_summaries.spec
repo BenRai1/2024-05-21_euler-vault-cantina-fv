@@ -37,10 +37,13 @@ import "./abstractBase.spec";
         function storage_interestAccumulator() external returns (uint256) envfree;
         function storage_configFlags() external returns (VaultHarness.Flags) envfree;
         function getCurrentVaultCacheHarness() external returns (Type.VaultCache memory) envfree;
+        function getUserBalanceHarness(address user) external returns (Type.Shares) envfree;
+        function getETokenAllowanceHarness(address user, address spender) external returns (uint256) envfree;
 
 
         //Summaries
         function Cache.updateVault() internal returns (Type.VaultCache memory) with(env e) => CVLUpdateVaultAssumeNoUpdate();
+
     
     }
 

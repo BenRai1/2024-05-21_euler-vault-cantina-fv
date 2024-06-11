@@ -94,4 +94,13 @@ contract VaultHarness is VaultModule, TokenModule, AbstractBaseHarness {
         vaultCache.interestAccumulator = vaultStorage.interestAccumulator;
         return vaultCache;
     }
+
+    //@audit uses bitwise operations, not sure if it works 
+    function getUserBalanceHarness(address user) external view returns (Shares) {
+        return vaultStorage.users[user].getBalance();
+    }
+
+    function getETokenAllowanceHarness(address user, address spender) external view returns (uint256) {
+        return vaultStorage.users[user].eTokenAllowance[spender];
+    }
 }

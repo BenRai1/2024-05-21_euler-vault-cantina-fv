@@ -24,6 +24,9 @@ methods {
     function assetsToSharesDownHarness(Type.Assets self, Type.VaultCache vaultCache) external returns (Type.Shares) envfree;
     function assetsToUintHarness(Type.Assets self) external returns (uint256) envfree;
     function sharesToUintHarness(Type.Shares self) external returns (uint256) envfree;
+    function uintToSharesHarness(uint256 amount) external returns (Type.Shares) envfree;
+    function shareToAssetsUpHarness(Type.Shares amount, Type.VaultCache vaultCache) external returns (Type.Assets) envfree;
+    function areChecksDeferredExt() external returns (bool) envfree;
 
 
     function _.balanceOf(address account) external envfree;
