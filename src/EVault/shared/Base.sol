@@ -13,7 +13,7 @@ import {IBalanceTracker} from "../../interfaces/IBalanceTracker.sol";
 import {ISequenceRegistry} from "../../interfaces/ISequenceRegistry.sol";
 
 import "./types/Types.sol";
-
+ 
 /// @title Base
 /// @custom:security-contact security@euler.xyz
 /// @author Euler Labs (https://www.eulerlabs.com/)

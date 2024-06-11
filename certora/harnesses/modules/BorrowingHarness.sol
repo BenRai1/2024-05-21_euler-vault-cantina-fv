@@ -154,9 +154,17 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
         }
     }
 
-    function getBalanceAndBalanceForwarderHarness(UserStorage storage userStorage) internal view returns (Shares, bool) {
-        return  (Shares.wrap(0), false); //@audit make this right
+    // function getBalanceAndBalanceForwarderHarness(UserStorage storage userStorage) internal view returns (Shares, bool) {
+    //     return  (Shares.wrap(0), false); //@audit make this right
+    // }
+
+    function getUserCollateralBalanceHarness(VaultCache memory vaultcache, address user) external view returns (uint256) {
+        return IERC20(vaultcache.asset).balanceOf(user);
     }
+
+
+
+
 
     
 

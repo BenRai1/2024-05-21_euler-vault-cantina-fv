@@ -215,6 +215,15 @@ abstract contract AbstractBaseHarness is Base {
     }
 
     
+    ////////////////////// USSER BALANCES ///////////////////////////////
+    function getUserSharesHarness(address user) external view returns (Shares) {
+        return vaultStorage.users[user].getBalance();
+    }
+
+    function getUserDebtHarness(address user) external view returns (Owed) {
+        return vaultStorage.users[user].getOwed();
+    }
+
 
     
 

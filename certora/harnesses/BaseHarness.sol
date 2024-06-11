@@ -12,7 +12,44 @@ import "../../certora/harnesses/AbstractBaseHarness.sol";
 // while also making function definitions sharable among harnesses via
 // AbstractBase.
 contract BaseHarness is Base, AbstractBaseHarness {
-    constructor(Integrations memory integrations) Base(integrations) {}
+    constructor(Integrations memory integrations) Base(integrations) {
+    }
+
+    function updateVaultHarness() external returns (VaultCache memory){
+            return updateVault();
+    }
+
+    function loadVaultHarness() external view returns (VaultCache memory){
+            return loadVault();
+    }
+
+    // function initVaultCacheHarness(VaultCache memory vaultCache) external view {
+    //         initVaultCache(vaultCache);
+    // }
+
+    function totalAssetsInternalHarness(VaultCache memory vaultCache) external view returns (uint256) {
+            return totalAssetsInternal(vaultCache);
+    }
+
+    function initOperationHarness(uint32 operation, address accountToCheck) external {
+            initOperation(operation, accountToCheck);
+    }
+
+    function isOperationDisabledHarness(Flags hookedOps, uint32 operation) external view returns (bool) {
+            return isOperationDisabled(hookedOps, operation);
+    }
+
+    function callHookHarness(Flags hookedOps, uint32 operation, address caller) external {
+            callHook(hookedOps, operation, caller);
+    }
+
+    function callHookWithLockHarness(Flags hookedOps, uint32 operation, address caller) external {
+            callHookWithLock(hookedOps, operation, caller);
+    }
+
+
+
+
 
 
 }

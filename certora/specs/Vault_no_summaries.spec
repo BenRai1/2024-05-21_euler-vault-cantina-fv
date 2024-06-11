@@ -15,31 +15,6 @@ use builtin rule sanity;
 //------------------------------- RULES TEST START ----------------------------------
 
 
-
-
-
-
-
-
-
-
-
-
-//transferFrom reverts
-
-
-
-//transferFromMax reverts
-
-
-
-
-
-
-
-
-
-
 //------------------------------- RULES TEST END ----------------------------------
 
 //------------------------------- RULES PROBLEMS START ----------------------------------
@@ -73,8 +48,8 @@ use builtin rule sanity;
         //VALUES AFTER
 
         //ASSERTS
-        // // assert5: flag is not set && isKnownNonOwnerAccount, then function should revert //@audit  time out
-        // assert(finalAssets != 0 && flagIsNotSet && isKnownNonOwnerAccount => lastReverted, "flag is not set && isKnownNonOwnerAccount: Function call should revert");
+        // assert5: flag is not set && isKnownNonOwnerAccount, then function should revert //@audit  time out
+        assert(finalAssets != 0 && flagIsNotSet && isKnownNonOwnerAccount => lastReverted, "flag is not set && isKnownNonOwnerAccount: Function call should revert");
 
 
         // // assert7: if sharesOfOwner < finalShares, then function should revert //@audit time out
@@ -134,9 +109,9 @@ use builtin rule sanity;
 
         //VALUES AFTER
 
-        //ASSERTS
-        // //assert3: if vaultCashe.cash < finalAssets, then function should revert //@audit time out
-        // assert(finalShares != 0 && vaultCache.cash < finalAssets => lastReverted, "vaultCashe.cash < finalAssets: Function call should revert");
+        // ASSERTS
+        //assert3: if vaultCashe.cash < finalAssets, then function should revert //@audit time out
+        assert(finalShares != 0 && vaultCache.cash < finalAssets => lastReverted, "vaultCashe.cash < finalAssets: Function call should revert");
 
         // assert5: flag is not set && isKnownNonOwnerAccount, then function should revert //@audit time out
         assert(finalShares != 0 && flagIsNotSet && isKnownNonOwnerAccount => lastReverted, "flag is not set && isKnownNonOwnerAccount: Function call should revert");
@@ -173,6 +148,257 @@ use builtin rule sanity;
 
 //------------------------------- RULES OK START ------------------------------------
 
+    //only functions to increase the assets of a user
+    rule onlyIncreaseUserAssets(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //VALUES BEFORE
+        address user;
+        require(user != Vault);
+        uint256 assetsBefore = userAssets(user);
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        uint256 assetsAfter = userAssets(user);
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(assetsBefore < assetsAfter =>
+        f.selector == sig:redeem(uint256,address,address).selector ||
+        f.selector == sig:withdraw(uint256,address,address).selector,
+        "This function should not be able to increase the user assets");
+    }
+
+    //only functions to decrease the assets of a user
+    rule onlyDecreaseUserAssets(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //VALUES BEFORE
+        address user;
+        require(user != Vault);
+        uint256 assetsBefore = userAssets(user);
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        uint256 assetsAfter = userAssets(user);
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(assetsBefore > assetsAfter =>
+        f.selector == sig:deposit(uint256,address).selector ||
+        f.selector == sig:mint(uint256,address).selector ||
+        f.selector == sig:skim(uint256,address).selector,
+        "This function should not be able to decrease the user assets");
+    }
+
+    //only functions to increase the vault cash
+    rule onlyIncreaseVaultCash(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //VALUES BEFORE
+        Type.Assets cashBefore = getCurrentVaultCacheHarness().cash;
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        Type.Assets cashAfter = getCurrentVaultCacheHarness().cash;
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(cashBefore < cashAfter =>
+        f.selector == sig:deposit(uint256,address).selector ||
+        f.selector == sig:mint(uint256,address).selector ||
+        f.selector == sig:skim(uint256,address).selector,
+        "This function should not be able to change the vault cash");
+    }
+
+    //only functions to decrease the vault cash
+    rule onlyDecreaseVaultCash(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //VALUES BEFORE
+        Type.Assets cashBefore = getCurrentVaultCacheHarness().cash;
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        Type.Assets cashAfter = getCurrentVaultCacheHarness().cash;
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(cashBefore > cashAfter =>
+        f.selector == sig:redeem(uint256,address,address).selector ||
+        f.selector == sig:withdraw(uint256,address,address).selector,
+        "This function should not be able to change the vault cash");
+    }
+
+    //only functions to increase user shares
+    rule onlyIncreaseUserShares(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //VALUES BEFORE
+        address user;
+        Type.Shares sharesBefore = getUserBalanceHarness(user);
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        Type.Shares sharesAfter = getUserBalanceHarness(user);
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(sharesBefore < sharesAfter =>
+        f.selector == sig:deposit(uint256,address).selector ||
+        f.selector == sig:mint(uint256,address).selector ||
+        f.selector == sig:transfer(address,uint256).selector ||
+        f.selector == sig:transferFrom(address,address,uint256).selector ||
+        f.selector == sig:transferFromMax(address,address).selector ||
+        f.selector == sig:skim(uint256,address).selector,
+        "This function should not be able to increase the user shares");
+    }
+
+    //only functions to decrease user shares
+    rule onlyDecreaseUserShares(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //VALUES BEFORE
+        address user;
+        Type.Shares sharesBefore = getUserBalanceHarness(user);
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        Type.Shares sharesAfter = getUserBalanceHarness(user);
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(sharesBefore > sharesAfter =>
+        f.selector == sig:redeem(uint256,address,address).selector ||
+        f.selector == sig:withdraw(uint256,address,address).selector ||
+        f.selector == sig:transfer(address,uint256).selector ||
+        f.selector == sig:transferFrom(address,address,uint256).selector ||
+        f.selector == sig:transferFromMax(address,address).selector,
+        "This function should not be able to decrease the user shares");
+    }
+
+    //only functions to increase the total supply of shares
+    rule onlyIncreaseTotalSupplyOfShares(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+        } {
+        //VALUES BEFORE
+        mathint totalSharesBefore = storage_totalShares();
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        mathint totalSharesAfter = storage_totalShares();
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(totalSharesBefore < totalSharesAfter =>
+        f.selector == sig:deposit(uint256,address).selector ||
+        f.selector == sig:mint(uint256,address).selector ||
+        f.selector == sig:skim(uint256,address).selector,
+        "This function should not be able to change the user shares");
+    }
+
+    //only functions to decreas the total supply of shares
+    rule onlyDecreaseTotalSupplyOfShares(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //VALUES BEFORE
+        mathint totalSharesBefore = storage_totalShares();
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        mathint totalSharesAfter = storage_totalShares();
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(totalSharesBefore > totalSharesAfter =>
+        f.selector == sig:redeem(uint256,address,address).selector ||
+        f.selector == sig:withdraw(uint256,address,address).selector,
+        "This function should not be able to change the user shares");
+    }
+
+    //transferFromMax works
+    rule transferFromMaxWorks(env e){
+        //FUNCTION PARAMETER
+        address from;
+        address to;
+        address otherUser;
+        Type.Shares finalShares = getUserBalanceHarness(from);
+        address onBahalfOf = actualCaller(e); //i: onBahalfOf  address
+        require(otherUser != from && otherUser != onBahalfOf && otherUser != to);
+        require(from != to && from != onBahalfOf);
+
+        //VALUES BEFORE
+        //shares before
+        Type.Shares sharesFromBefore = getUserBalanceHarness(from);
+        Type.Shares sharesToBefore = getUserBalanceHarness(to);
+        Type.Shares sharesotherUserBefore = getUserBalanceHarness(otherUser);
+
+        //allowance before
+        uint256 allowanceOtherUserForOnBehalfOfBefore = getETokenAllowanceHarness(otherUser, onBahalfOf); //i: otherUser => onBahalfOf
+        uint256 allowanceOtherUserForFromBefore = getETokenAllowanceHarness(otherUser, from); //i: otherUser => from
+        uint256 allowanceFromForOnBehalfOfBefore = getETokenAllowanceHarness(from, onBahalfOf); //i: from => onBahalfOf 
+        uint256 allowanceFromForOtherUserBefore = getETokenAllowanceHarness(from, otherUser); //i: from => otherUser
+        uint256 allowanceOnBehalfOfForOtherUserBefore = getETokenAllowanceHarness(onBahalfOf, otherUser); //i: onBahalfOf => otherUser
+        uint256 allowanceOnBahalfOfForFromBefore = getETokenAllowanceHarness(onBahalfOf, from); //i: onBahalfOf => from
+
+        //FUNCTION CALL
+        bool returnValueCall= transferFromMax(e, from, to);
+
+        //VALUES AFTER
+        //shares after
+        Type.Shares sharesFromAfter = getUserBalanceHarness(from);
+        Type.Shares sharesToAfter = getUserBalanceHarness(to);
+        Type.Shares sharesotherUserAfter = getUserBalanceHarness(otherUser);
+
+        //allowance after
+        uint256 allowanceOtherUserForOnBehalfOfAfter = getETokenAllowanceHarness(otherUser, onBahalfOf); //i: otherUser => onBahalfOf
+        uint256 allowanceOtherUserForFromAfter = getETokenAllowanceHarness(otherUser, from); //i: otherUser => from
+        uint256 allowanceFromForOnBehalfOfAfter = getETokenAllowanceHarness(from, onBahalfOf); //i: from => onBahalfOf
+        uint256 allowanceFromForOtherUserAfter = getETokenAllowanceHarness(from, otherUser); //i: from => otherUser
+        uint256 allowanceOnBahalfOfForOtherUserAfter = getETokenAllowanceHarness(onBahalfOf, otherUser); //i: onBahalfOf => otherUser
+        uint256 allowanceOnBahalfOfForFromAfter = getETokenAllowanceHarness(onBahalfOf, from); //i: onBahalfOf => from
+
+
+        //ASSERTS
+        //assert1: returnValueCall should be true
+        assert(returnValueCall == true, "Return value should be true");
+
+        //assert3: shares for from should be 0
+        assert(sharesFromAfter == 0, "Shares of from should be 0");
+
+        //assert4: shares should increase for to by finalShares
+        assert(sharesToBefore + finalShares == to_mathint(sharesToAfter), "Shares of to should increase by finalShares");
+
+        //assert5: shares should not change for otherUser
+        assert(sharesotherUserBefore == sharesotherUserAfter, "Shares of otherUser should not change");
+
+        //assert6: if allowanceFromForOnBehalfOf != max_uint256, allowance should decrease by finalShares
+        assert(allowanceFromForOnBehalfOfBefore != max_uint256 => allowanceFromForOnBehalfOfBefore - finalShares == to_mathint(allowanceFromForOnBehalfOfAfter), "Allowance from => onBehalfOf should decrease by finalShares");
+
+        //assert7: if allowanceFromForOnBehalfOf = max_uint256, allowance should stay the same
+        assert(allowanceFromForOnBehalfOfBefore == max_uint256 => allowanceFromForOnBehalfOfBefore == allowanceFromForOnBehalfOfAfter, "Allowance from => onBehalfOf should stay the same");
+
+        //assert8: allowance should not change for otherUser
+        assert(allowanceOtherUserForFromBefore == allowanceOtherUserForFromAfter
+        && allowanceOtherUserForOnBehalfOfBefore == allowanceOtherUserForOnBehalfOfAfter,
+        "Allowance otherUser => from/onBehalfOf should not change");
+
+        //assert9: allowance should not change for onBehalfOf
+        assert(allowanceOnBahalfOfForFromBefore == allowanceOnBahalfOfForFromAfter
+        && allowanceOnBehalfOfForOtherUserBefore == allowanceOnBahalfOfForOtherUserAfter,
+        "Allowance onBehalfOf => from/otherUser should not change");
+
+        //assert10: allowance from => otherUser should not change
+        assert(allowanceFromForOtherUserBefore == allowanceFromForOtherUserAfter, "Allowance from => otherUser should not change");
+    }
 
     //transferFromMax reverts
     rule transferFromMaxReverts(env e){

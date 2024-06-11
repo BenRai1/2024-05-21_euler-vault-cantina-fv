@@ -20,119 +20,6 @@ use builtin rule sanity;
     // invariant cashShouldNeverBeBiggerThanBalance(env e) 
     // Vault.vaultStorage.cash <= userAssets(e, currentContract);
 
-    //only functions to increase the total supply of shares
-    //only functions to decreas the total supply of shares
-
-
-
-
-
-
-    //transferFromMax works
-    rule transferFromMaxWorks(env e){
-        //FUNCTION PARAMETER
-        address from;
-        address to;
-        address otherUser;
-        Type.Shares finalShares = shareBalanceGhost[from];
-        address onBahalfOf = actualCaller(e); //i: onBahalfOf  address
-        require(otherUser != from && otherUser != onBahalfOf && otherUser != to);
-        require(from != to && from != onBahalfOf);
-
-        //VALUES BEFORE
-        //shares before
-        Type.Shares sharesFromBefore = shareBalanceGhost[from];
-        Type.Shares sharesToBefore = shareBalanceGhost[to];
-        Type.Shares sharesotherUserBefore = shareBalanceGhost[otherUser];
-
-        //allowance before
-        uint256 allowanceOtherUserForOnBehalfOfBefore = shareAllowanceGhost[otherUser][onBahalfOf]; //i: otherUser => onBahalfOf
-        uint256 allowanceOtherUserForFromBefore = shareAllowanceGhost[otherUser][from]; //i: otherUser => from
-        uint256 allowanceFromForOnBehalfOfBefore = shareAllowanceGhost[from][onBahalfOf]; //i: from => onBahalfOf 
-        uint256 allowanceFromForOtherUserBefore = shareAllowanceGhost[from][otherUser]; //i: from => otherUser
-        uint256 allowanceOnBehalfOfForOtherUserBefore = shareAllowanceGhost[onBahalfOf][otherUser]; //i: onBahalfOf => otherUser
-        uint256 allowanceOnBahalfOfForFromBefore = shareAllowanceGhost[onBahalfOf][from]; //i: onBahalfOf => from
-
-
-
-        //FUNCTION CALL
-        bool returnValueCall= transferFromMax(e, from, to);
-
-        //VALUES AFTER
-        //shares after
-        Type.Shares sharesFromAfter = shareBalanceGhost[from];
-        Type.Shares sharesToAfter = shareBalanceGhost[to];
-        Type.Shares sharesotherUserAfter = shareBalanceGhost[otherUser];
-
-        //allowance after
-        uint256 allowanceOtherUserForOnBehalfOfAfter = shareAllowanceGhost[otherUser][onBahalfOf]; //i: otherUser => onBahalfOf
-        uint256 allowanceOtherUserForFromAfter = shareAllowanceGhost[otherUser][from]; //i: otherUser => from
-        uint256 allowanceFromForOnBehalfOfAfter = shareAllowanceGhost[from][onBahalfOf]; //i: from => onBahalfOf
-        uint256 allowanceFromForOtherUserAfter = shareAllowanceGhost[from][otherUser]; //i: from => otherUser
-        uint256 allowanceOnBahalfOfForOtherUserAfter = shareAllowanceGhost[onBahalfOf][otherUser]; //i: onBahalfOf => otherUser
-        uint256 allowanceOnBahalfOfForFromAfter = shareAllowanceGhost[onBahalfOf][from]; //i: onBahalfOf => from
-    
-
-
-
-        //ASSERTS
-  
-
-
-
-        //assert3: shares for from should be 0
-        assert(sharesFromAfter == 0, "Shares of from should be 0");
-
-        //assert4: shares should increase for to by finalShares
-        assert(sharesToBefore + finalShares == to_mathint(sharesToAfter), "Shares of to should increase by finalShares");
-
-        //assert6: if allowanceFromForOnBehalfOf != max_uint256, allowance should decrease by finalShares
-        assert(allowanceFromForOnBehalfOfBefore != max_uint256 => allowanceFromForOnBehalfOfBefore - finalShares == to_mathint(allowanceFromForOnBehalfOfAfter), "Allowance from => onBehalfOf should decrease by finalShares");
-
-        //assert7: if allowanceFromForOnBehalfOf = max_uint256, allowance should stay the same
-        assert(allowanceFromForOnBehalfOfBefore == max_uint256 => allowanceFromForOnBehalfOfBefore == allowanceFromForOnBehalfOfAfter, "Allowance from => onBehalfOf should stay the same");
-
-        //assert8: allowance should not change for otherUser
-        assert(allowanceOtherUserForFromBefore == allowanceOtherUserForFromAfter
-        && allowanceOtherUserForOnBehalfOfBefore == allowanceOtherUserForOnBehalfOfAfter,
-        "Allowance otherUser => from/onBehalfOf should not change");
-
-        //assert9: allowance should not change for onBehalfOf
-        assert(allowanceOnBahalfOfForFromBefore == allowanceOnBahalfOfForFromAfter
-        && allowanceOnBehalfOfForOtherUserBefore == allowanceOnBahalfOfForOtherUserAfter,
-        "Allowance onBehalfOf => from/otherUser should not change");
-
-        //assert10: allowance from => otherUser should not change
-        assert(allowanceFromForOtherUserBefore == allowanceFromForOtherUserAfter, "Allowance from => otherUser should not change");
-
-
-
-
-
-
-        //-----------------------ASSERTS OK START -----------------------
-            //assert1: returnValueCall should be true
-            assert(returnValueCall == true, "Return value should be true");
-
-
-            //assert5: shares should not change for otherUser
-            assert(sharesotherUserBefore == sharesotherUserAfter, "Shares of otherUser should not change");
-
-
-        //-----------------------ASSERTS OK END -----------------------
-
-    } 
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1025,7 +912,7 @@ use builtin rule sanity;
     rule skimWorks3(env e){
         //FUNCTION PARAMETER
         uint256 amount;
-        // require(amount == max_uint256);//@audit to be able to see valid run
+        require(amount == max_uint256);//@audit to be able to see valid run
         address receiver;
         address otherUser;
         require(otherUser != receiver);

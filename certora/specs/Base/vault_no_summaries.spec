@@ -39,6 +39,7 @@ import "./abstractBase.spec";
         function getCurrentVaultCacheHarness() external returns (Type.VaultCache memory) envfree;
         function getUserBalanceHarness(address user) external returns (Type.Shares) envfree;
         function getETokenAllowanceHarness(address user, address spender) external returns (uint256) envfree;
+        function userAssets(address user) external returns(uint256) envfree;
 
 
         //Summaries

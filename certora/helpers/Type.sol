@@ -23,4 +23,16 @@ struct UserStorage {
     mapping(address spender => uint256 allowance) eTokenAllowance;
 }
 
+// type Shares is uint112;
+
+// type Assets is uint112;
+
+// type Owed is uint144;
+
+// type AmountCap is uint16;
+
+// type ConfigAmount is uint16;
+
+// type Flags is uint32;
+
 }
