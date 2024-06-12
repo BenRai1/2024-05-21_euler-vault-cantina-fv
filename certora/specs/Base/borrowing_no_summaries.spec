@@ -30,6 +30,11 @@ methods {
     function _.resolve(Type.AmountCap self) external => CVLResolve(self) expect (uint256);
     function Cache.updateVault() internal returns (Type.VaultCache memory) with(env e) => CVLUpdateVault();
 
+    // function _.initOperation(uint32 operation, address accountToCheck) 
+    //     internal with (env e) => CVLInitOperation(e) expect (Type.VaultCache memory, address); //@audit-issue should be removed for the "revert" rules
+
+    // function _.getBalance(Type.UserStorage storage self) internal => CVLGetBalance(self.data) expect (Type.Shares);
+
 
 
 }
@@ -65,6 +70,20 @@ methods {
 ///////////////// DEFINITIONS END /////////////////////
 
 ////////////////// FUNCTIONS START //////////////////////
+    // function CVLGetBalance(Type.PackedUserSlot self) returns Type.Shares {
+    //     return sharesGhost;
+    // }
+
+    // ghost Type.Shares sharesGhost;
+
+    // ghost mapping(Type.PackedUserSlot => Type.Shares) userSharesGhost;
+
+    // function CVLInitOperation(env e) returns (Type.VaultCache, address) {
+    //     Type.VaultCache vaultCache = getCurrentVaultCacheHarness();
+    //     address account = actualCaller(e);
+    //     return (vaultCache, account);
+    // }
+
     function CVLUpdateVault() returns Type.VaultCache {
             Type.VaultCache vaultCache = getCurrentVaultCacheHarness();
             return vaultCache;

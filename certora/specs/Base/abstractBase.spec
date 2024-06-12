@@ -16,7 +16,7 @@ methods {
     function unitToAssetsHarness(uint256 amount) external returns (Type.Assets) envfree;
     function owedToAssetsUpHarness(Type.Owed amount) external returns (Type.Assets) envfree;
     function sharesToAssetsDownHarness(Type.Shares amount, Type.VaultCache vaultCache) external returns (Type.Assets) envfree;
-    function assetToOwedHarness(Type.Assets self) external returns (Type.Owed) envfree;
+    function assetsToOwedHarness(Type.Assets self) external returns (Type.Owed) envfree;
     function uintToOwedHarness(uint256 amount) external returns (Type.Owed) envfree;
     function subUncheckedHarness(Type.Owed a, Type.Owed b) external returns (Type.Owed) envfree;
     function addUncheckedHarness(Type.Owed a, Type.Owed b) external returns (Type.Owed) envfree;

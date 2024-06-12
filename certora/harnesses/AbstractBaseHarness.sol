@@ -170,11 +170,12 @@ abstract contract AbstractBaseHarness is Base {
 
     ///////////////////////////// TO OWED //////////////////////////////////////
 
-    function assetToOwedHarness(Assets self) external pure returns (Owed) {
+    function assetsToOwedHarness(Assets self) external pure returns (Owed) {
         unchecked {
             return TypesLib.toOwed(self.toUint() << INTERNAL_DEBT_PRECISION_SHIFT);
         }
     }
+
 
     function uintToOwedHarness(uint256 amount) external pure returns (Owed) {
         return Owed.wrap(uint144(amount));
@@ -223,6 +224,11 @@ abstract contract AbstractBaseHarness is Base {
     function getUserDebtHarness(address user) external view returns (Owed) {
         return vaultStorage.users[user].getOwed();
     }
+
+    // function summarizingFunctionHarness(UserStorage storage self) internal view returns (Shares) {
+    //     Shares balance = Shares.wrap(0);
+    //     return balance;
+    // }
 
 
     

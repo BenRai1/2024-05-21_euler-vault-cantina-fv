@@ -104,10 +104,10 @@ abstract contract BorrowingModule is IBorrowing, AssetTransfers, BalanceUtils, L
         Shares shares;
 
         if (amount == type(uint256).max) {
-            shares = vaultStorage.users[account].getBalance();
+            shares = vaultStorage.users[account].getBalance(); //i: all shares held by onBehalfOf
             assets = shares.toAssetsDown(vaultCache);
         } else {
-            assets = amount.toAssets();
+            assets = amount.toAssets(); 
             shares = assets.toSharesUp(vaultCache);
         }
 

@@ -62,7 +62,7 @@ abstract contract BorrowUtils is Base {
 
         if (assets > owed) revert E_RepayTooMuch();
 
-        Owed owedRemaining = owed.subUnchecked(assets).toOwed();
+        Owed owedRemaining = owed.subUnchecked(assets).toOwed(); //i: works since owed above is in assets
 
         setUserBorrow(vaultCache, account, owedRemaining);
         vaultStorage.totalBorrows = vaultCache.totalBorrows = vaultCache.totalBorrows > owedExact

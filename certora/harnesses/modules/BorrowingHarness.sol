@@ -138,8 +138,8 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
             shares = sharesOnBehalf;
             assets = shares.toAssetsDown(vaultCache);
         } else {
-            shares = assets.toSharesUp(vaultCache);
             assets = amount.toAssets();
+            shares = assets.toSharesUp(vaultCache);
         }
 
         if (assets.isZero()) {
@@ -161,6 +161,8 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
     function getUserCollateralBalanceHarness(VaultCache memory vaultcache, address user) external view returns (uint256) {
         return IERC20(vaultcache.asset).balanceOf(user);
     }
+
+    
 
 
 
