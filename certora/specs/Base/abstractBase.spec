@@ -51,6 +51,15 @@ definition BASE_HARNESS_FUNCTIONS(method f) returns bool =
     f.selector == sig:isRedeemDisabled().selector ||
     f.selector == sig:isSkimDisabled().selector ||
     f.selector == sig:isWithdrawDisabled().selector ||
+    f.selector == sig:isTransferDisabled().selector ||
+    f.selector == sig:isRepayDisabled().selector ||
+    f.selector == sig:isRepayWithSharesDisabled().selector ||
+    f.selector == sig:isConvertFeesDisabled().selector ||
+    f.selector == sig:isTouchDisabled().selector ||
+    f.selector == sig:isVaultStatusCheckDisabled().selector ||
+    f.selector == sig:isBorrowDisabled().selector ||
+    f.selector == sig:isPullDebtDisabled().selector ||
+    f.selector == sig:isLiquidateDisabled().selector ||
     f.selector == sig:vaultCacheOracleConfigured().selector ||
     f.selector == sig:getBalanceAndForwarderExt(address).selector ||
     f.selector == sig:reentrancyLockedHarness().selector;

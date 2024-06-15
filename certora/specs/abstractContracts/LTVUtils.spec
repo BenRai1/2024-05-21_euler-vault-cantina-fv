@@ -9,19 +9,6 @@ methods{
     function getLTVConfigHarness(address collateral) external returns(Type.LTVConfig memory) envfree;
 }
 
-//------------------------------- RULES TEST START ----------------------------------
-
-
-
-
-
-
-
-//------------------------------- RULES TEST END ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
 
 //------------------------------- RULES OK START ------------------------------------
 
@@ -39,7 +26,6 @@ methods{
 
         //Assert
         assert(resultCall == targetResult, "resultCall is not targetResult");
-
     }
 
     //getLTVConfig works
@@ -51,7 +37,6 @@ methods{
         //target result
         Type.LTVConfig collateralLTVConfig = getLTVConfigHarness(collateral);
         Type.ConfigAmount targetResult = getCurrentLiquidationLTV(e, collateralLTVConfig);
-
 
         //Function call
         Type.ConfigAmount resultCall = getLTVHarness(e, collateral, liquidation);
@@ -69,10 +54,3 @@ methods{
 
 //------------------------------- RULES OK END ------------------------------------
 
-//------------------------------- INVARIENTS OK START-------------------------------
-
-//------------------------------- INVARIENTS OK END-------------------------------
-
-//------------------------------- ISSUES OK START-------------------------------
-
-//------------------------------- ISSUES OK END-------------------------------

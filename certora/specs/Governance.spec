@@ -20,227 +20,9 @@ use rule privilegedOperation;
 
 //------------------------------- RULES TEST START ----------------------------------
 
-    //getting governorAdmin works
-    rule getGovernorAdminIntegraty(env e) {
-        address governorAdmin = Governance.vaultStorage.governorAdmin;
+   
 
-        //function call
-        address governorAdminCall = governorAdmin();
 
-        assert(governorAdminCall == governorAdmin, "Governor admin was not returned correctly"); 
-    }
-
-    //getting feeReceiver works
-    rule getFeeReceiverIntegraty(env e) {
-        address feeReceiver = Governance.vaultStorage.feeReceiver;
-
-        //function call
-        address feeReceiverCall = feeReceiver();
-
-        assert(feeReceiverCall == feeReceiver, "Fee receiver was not returned correctly");
-    }
-
-    //getting interestFee works
-    rule getInterestFeeIntegraty(env e) {
-        uint16 interestFee = Governance.vaultStorage.interestFee;
-
-        //function call
-        uint16 interestFeeCall = interestFee();
-
-        assert(interestFeeCall == interestFee, "Interest fee was not returned correctly");
-    }
-
-    //getting interestRateModel works
-    rule getInterestRateModelIntegraty(env e) {
-        address interestRateModel = Governance.vaultStorage.interestRateModel;
-
-        //function call
-        address interestRateModelCall = interestRateModel();
-
-        assert(interestRateModelCall == interestRateModel, "Interest rate model was not returned correctly");
-    }
-
-    // getting caps works
-    rule getCapsIntegraty(env e) {
-        uint16 supplyCap = Governance.vaultStorage.supplyCap;
-        uint16 borrowCap = Governance.vaultStorage.borrowCap;
-
-        //function call
-        uint16 supplyCapCall;
-        uint16 borrowCapCall;
-        (supplyCapCall, borrowCapCall) = caps();
-
-        assert(supplyCapCall == supplyCap && borrowCapCall == borrowCap, "Caps were not returned correctly");
-    }
-
-    // getting configFlags works
-    rule getConfigFlagsIntegraty(env e) {
-        uint32 configFlags = Governance.vaultStorage.configFlags;
-        
-        //function call
-        uint32 configFlagsCall = configFlags();
-
-        assert(configFlagsCall == configFlags, "Config flags were not returned correctly");
-    }
-
-    // getting EVC works 
-    rule getEVCIntegraty(env e) {
-        address EVC = EVCHarness(e);
-
-        //function call
-        address EVCCall = EVC();
-
-        assert(EVCCall == EVC, "EVC was not returned correctly");
-    }
-
-    // getting hookConfig works
-    rule getHookConfigIntegraty(env e) {
-        address hookTarget = Governance.vaultStorage.hookTarget;
-        uint32 hookedOps = Governance.vaultStorage.hookedOps;
-
-        //function call
-        address hookTargetCall;
-        uint32 hookedOpsCall;
-        (hookTargetCall, hookedOpsCall) = hookConfig();
-
-        assert(hookTargetCall == hookTarget && hookedOpsCall == hookedOps, "Hook config was not returned correctly");
-    }
-
-    // getting liquidationCoolOffTime works
-    rule getLiquidationCoolOffTimeIntegraty(env e) {
-        uint16 liquidationCoolOffTime = Governance.vaultStorage.liquidationCoolOffTime;
-
-        //function call
-        uint16 liquidationCoolOffTimeCall = liquidationCoolOffTime();
-
-        assert(liquidationCoolOffTimeCall == liquidationCoolOffTime, "Liquidation cool off time was not returned correctly");
-    }
-
-    // getting LTVBorrow(address) works
-    rule getLTVBorrowIntegraty(env e) {
-        address collateral;
-        uint16 borrowLTV = Governance.vaultStorage.ltvLookup[collateral].borrowLTV; 
-
-        //function call
-        uint16 borrowLTVCall = LTVBorrow(e,collateral);
-
-        assert(borrowLTVCall == borrowLTV, "Borrow LTV was not returned correctly");
-    }
-
-    // getting LTVFull(address) works
-    rule getLTVFullIntegraty(env e) {
-        address collateral;
-        uint16 borrowLTV = Governance.vaultStorage.ltvLookup[collateral].borrowLTV;
-        uint16 liquidationLTV = Governance.vaultStorage.ltvLookup[collateral].liquidationLTV;
-        uint16 initialLiquidationLTV = Governance.vaultStorage.ltvLookup[collateral].initialLiquidationLTV;
-        uint48 targetTimestamp = Governance.vaultStorage.ltvLookup[collateral].targetTimestamp;
-        uint32 rampDuration = Governance.vaultStorage.ltvLookup[collateral].rampDuration;
-
-        //function call
-        uint16 borrowLTVCall;
-        uint16 liquidationLTVCall;
-        uint16 initialLiquidationLTVCall;
-        uint48 targetTimestampCall;
-        uint32 rampDurationCall;
-        (borrowLTVCall, liquidationLTVCall, initialLiquidationLTVCall, targetTimestampCall, rampDurationCall) = LTVFull(collateral);
-
-        assert(borrowLTVCall == borrowLTV && liquidationLTVCall == liquidationLTV && initialLiquidationLTVCall == initialLiquidationLTV && targetTimestampCall == targetTimestamp && rampDurationCall == rampDuration, "LTV values were not returned correctly");
-    }
-
-    // getting LTVLiquidation(address) works //@audit does not work
-    // rule getLTVLiquidationIntegraty(env e) {
-    //     address collateral;
-    //     GovernanceHarness.LTVConfig ltvLookup = Governance.vaultStorage.ltvLookup[collateral];
-    //     uint16 liquidationLTV = getLTVTrueHarness(e, ltvLookup );
-
-    //     //function call
-    //     uint16 liquidationLTVCall = LTVLiquidation(e, collateral);
-
-    //     assert(liquidationLTVCall == liquidationLTV, "Liquidation LTV was not returned correctly");
-    // }
-
-    // getting LTVList works
-    rule getLTVListIntegraty(env e) {
-        address[] LTVList = LTVListHarness(e);
-
-        //function call
-        address[] LTVListCall = LTVList();
-        uint256 i = LTVListCall.length;
-
-        assert(LTVListCall[i] == LTVList[i], "LTV list was not returned correctly");
-    }
-
-    // getting maxLiquidationDiscount works
-    rule getMaxLiquidationDiscountIntegraty(env e) {
-        uint16 maxLiquidationDiscount = Governance.vaultStorage.maxLiquidationDiscount;
-
-        //function call
-        uint16 maxLiquidationDiscountCall = maxLiquidationDiscount();
-
-        assert(maxLiquidationDiscountCall == maxLiquidationDiscount, "Max liquidation discount was not returned correctly");
-    }
-
-    // getting oracle works 
-    rule getOracleIntegraty(env e) {
-        address oracle = oracleHarness(e);
-
-        //function call
-        address oracleCall = oracle();
-
-        assert(oracleCall == oracle, "Oracle was not returned correctly");
-    }
-
-    // getting permit2Address works
-    rule getPermit2AddressIntegraty(env e) {
-        address permit2Address = Governance.permit2;
-
-        //function call
-        address permit2AddressCall = permit2Address();
-
-        assert(permit2AddressCall == permit2Address, "Permit2 address was not returned correctly");
-    }
-
-    // getting protocolConfigAddress works
-    rule getProtocolConfigAddressIntegraty(env e) {
-        address protocolConfigAddress = Governance.protocolConfig;
-
-        //function call
-        address protocolConfigAddressCall = protocolConfigAddress();
-
-        assert(protocolConfigAddressCall == protocolConfigAddress, "Protocol config address was not returned correctly");
-    }
-
-    // getting protocolFeeReceiver works
-    rule getProtocolFeeReceiverIntegraty(env e) {
-        bool exist = ProtocolConfig._protocolFeeConfig[currentContract].exists;
-        address protocolFeeReceiver;
-        if(exist){
-            protocolFeeReceiver = ProtocolConfig._protocolFeeConfig[currentContract].feeReceiver;
-        }else{
-            protocolFeeReceiver = 0;
-        }
-
-        //function call
-        address protocolFeeReceiverCall = protocolFeeReceiver();
-
-        assert(protocolFeeReceiverCall == protocolFeeReceiver, "Protocol fee receiver was not returned correctly");
-    }
-
-    // getting protocolFeeShare works
-    rule getProtocolFeeShareIntegraty(env e) {
-        bool exist = ProtocolConfig._protocolFeeConfig[currentContract].exists;
-        uint16 protocolFeeShare;
-        if(exist){
-            protocolFeeShare = ProtocolConfig._protocolFeeConfig[currentContract].protocolFeeShare;
-        } else {
-            protocolFeeShare = 0;
-        }
-
-        //function call
-        uint256 protocolFeeShareCall = protocolFeeShare();
-
-        assert(to_mathint(protocolFeeShareCall) == to_mathint(protocolFeeShare), "Protocol fee share was not returned correctly");
-    }
 
 
 
@@ -265,73 +47,75 @@ use rule privilegedOperation;
 
 //------------------------------- RULES TEST END ----------------------------------
 
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-
-
-
-   
-
-    //convertFees reverts 
-    rule convertFeesRevertIntegraty(env e) { //@audit-issue reverts for assert 1 becasue of summary of initOperation => spec without the summary
-        //GENERAL VARIABLES
-        address actualCaller = actualCaller(e);
-        address user;
-            
-        //VALUES BEFORE
-        GovernanceHarness.VaultCache vaultCacheBefore = getVaultCacheHarness(e);
-        address protocolReceiver;
-        uint16 protocolFee;
-        (protocolReceiver, protocolFee) = ProtocolConfig.protocolFeeConfig(e,currentContract);
-        //Balances
-        GovernanceHarness.PackedUserSlot userDataBefore = getUserStorageDataHarness(user);
-
-        //FUNCTION CALL
-        convertFees@withrevert(e);
-        bool reverted = lastReverted;
-
-        //VALUES AFTER
-        GovernanceHarness.VaultCache vaultCacheAfter = getVaultCacheHarness(e);
-        GovernanceHarness.PackedUserSlot userDataAfter = getUserStorageDataHarness(user);
-
-
-        //ASSERTS
-        //assert1: if hook target is zero address, revert
-        assert(actualCaller == 0 => reverted, "ActualCaller is 0");
-
-
-        //assert2: if vaultCache.accumulatedFees = 0, stuff should not change
-        assert(vaultCacheBefore.accumulatedFees == 0 => 
-        vaultCacheBefore.accumulatedFees == vaultCacheAfter.accumulatedFees &&
-        userDataBefore == userDataAfter,
-        "Accumulated fees or balances changed");
-        
-        //assert3: if the protocolReceiver = 0 address, revert
-        assert(vaultCacheBefore.accumulatedFees != 0 && protocolReceiver == 0 && protocolFee != 0 => reverted, "Protocol receiver is 0");
-    }
+// //------------------------------- RULES PROBLEMS START ----------------------------------
 
 
    
 
 
-    //only spesific functions should change balances //@audit setLTV also changes balances, check why
-    rule onlyChangeBalances(env e, method f, calldataarg args) filtered{f -> !f.isView && !f.isPure && !HARNESS_FUNCTIONS(f)}{
-        address user;
-        GovernanceHarness.PackedUserSlot userDataBefore = getUserStorageDataHarness(user);
-        GovernanceHarness.Shares sharesBefore = unpackBalanceHarness(userDataBefore);
+//     //only spesific functions should change balances //@audit setLTV also changes balances, check why
+//     rule onlyChangeBalances(env e, method f, calldataarg args) filtered{f -> !f.isView && !f.isPure && !HARNESS_FUNCTIONS(f)}{
+//         address user;
+//         GovernanceHarness.PackedUserSlot userDataBefore = getUserStorageDataHarness(user);
+//         GovernanceHarness.Shares sharesBefore = unpackBalanceHarness(userDataBefore);
         
-        f(e, args);
+//         f(e, args);
 
-        GovernanceHarness.PackedUserSlot userDataAfter = getUserStorageDataHarness(user);
-        GovernanceHarness.Shares sharesAfter = unpackBalanceHarness(userDataAfter);
+//         GovernanceHarness.PackedUserSlot userDataAfter = getUserStorageDataHarness(user);
+//         GovernanceHarness.Shares sharesAfter = unpackBalanceHarness(userDataAfter);
 
-        assert(userDataBefore != userDataAfter =>
-        f.selector == sig:convertFees().selector, "Balances was changed by unothorised function");
-    }
+//         assert(userDataBefore != userDataAfter =>
+//         f.selector == sig:convertFees().selector, "Balances was changed by unothorised function");
+//     }
+
+
+//         // getting LTVLiquidation(address) works //@audit does not work
+//     rule getLTVLiquidationIntegraty(env e) {
+//         address collateral;
+//         GovernanceHarness.LTVConfig ltvLookup = Governance.vaultStorage.ltvLookup[collateral];
+//         uint16 liquidationLTV = getLTVTrueHarness(e, ltvLookup );
+
+//         //function call
+//         uint16 liquidationLTVCall = LTVLiquidation(e, collateral);
+
+//         assert(liquidationLTVCall == liquidationLTV, "Liquidation LTV was not returned correctly");
+//     }
+
+//     // getting protocolFeeReceiver works //@audit does not work
+//     rule getProtocolFeeReceiverIntegraty(env e) {
+//         bool exist = ProtocolConfig._protocolFeeConfig[currentContract].exists;
+//         address protocolFeeReceiver;
+//         if(exist){
+//             protocolFeeReceiver = ProtocolConfig._protocolFeeConfig[currentContract].feeReceiver;
+//         }else{
+//             protocolFeeReceiver = 0;
+//         }
+
+//         //function call
+//         address protocolFeeReceiverCall = protocolFeeReceiver();
+
+//         assert(protocolFeeReceiverCall == protocolFeeReceiver, "Protocol fee receiver was not returned correctly");
+//     }
+
+//     // getting protocolFeeShare works //@audit does not work
+//     rule getProtocolFeeShareIntegraty(env e) {
+//         bool exist = ProtocolConfig._protocolFeeConfig[currentContract].exists;
+//         uint16 protocolFeeShare;
+//         if(exist){
+//             protocolFeeShare = ProtocolConfig._protocolFeeConfig[currentContract].protocolFeeShare;
+//         } else {
+//             protocolFeeShare = 0;
+//         }
+
+//         //function call
+//         uint256 protocolFeeShareCall = protocolFeeShare();
+
+//         assert(to_mathint(protocolFeeShareCall) == to_mathint(protocolFeeShare), "Protocol fee share was not returned correctly");
+//     }
 
 
 
-//------------------------------- RULES PROBLEMS END ----------------------------------
+// //------------------------------- RULES PROBLEMS END ----------------------------------
 
 //------------------------------- RULES OK START ------------------------------------
 
@@ -915,6 +699,190 @@ use rule privilegedOperation;
     }
 
 //------------------------------- RULES OK END ------------------------------------
+
+//-------------------------------RULES GET OK START ----------------------------------
+
+    // getting LTVList works
+    rule getLTVListIntegraty(env e) {
+        address[] LTVList = LTVListHarness(e);
+
+        //function call
+        address[] LTVListCall = LTVList();
+        uint256 i = LTVListCall.length;
+
+        assert(LTVListCall[i] == LTVList[i], "LTV list was not returned correctly");
+    }
+
+    // getting maxLiquidationDiscount works
+    rule getMaxLiquidationDiscountIntegraty(env e) {
+        uint16 maxLiquidationDiscount = Governance.vaultStorage.maxLiquidationDiscount;
+
+        //function call
+        uint16 maxLiquidationDiscountCall = maxLiquidationDiscount();
+
+        assert(maxLiquidationDiscountCall == maxLiquidationDiscount, "Max liquidation discount was not returned correctly");
+    }
+
+    // getting oracle works 
+    rule getOracleIntegraty(env e) {
+        address oracle = oracleHarness(e);
+
+        //function call
+        address oracleCall = oracle();
+
+        assert(oracleCall == oracle, "Oracle was not returned correctly");
+    }
+
+    // getting permit2Address works
+    rule getPermit2AddressIntegraty(env e) {
+        address permit2Address = Governance.permit2;
+
+        //function call
+        address permit2AddressCall = permit2Address();
+
+        assert(permit2AddressCall == permit2Address, "Permit2 address was not returned correctly");
+    }
+
+    // getting protocolConfigAddress works
+    rule getProtocolConfigAddressIntegraty(env e) {
+        address protocolConfigAddress = Governance.protocolConfig;
+
+        //function call
+        address protocolConfigAddressCall = protocolConfigAddress();
+
+        assert(protocolConfigAddressCall == protocolConfigAddress, "Protocol config address was not returned correctly");
+    }
+
+     //getting governorAdmin works
+    rule getGovernorAdminIntegraty(env e) {
+        address governorAdmin = Governance.vaultStorage.governorAdmin;
+
+        //function call
+        address governorAdminCall = governorAdmin();
+
+        assert(governorAdminCall == governorAdmin, "Governor admin was not returned correctly"); 
+    }
+
+    //getting feeReceiver works
+    rule getFeeReceiverIntegraty(env e) {
+        address feeReceiver = Governance.vaultStorage.feeReceiver;
+
+        //function call
+        address feeReceiverCall = feeReceiver();
+
+        assert(feeReceiverCall == feeReceiver, "Fee receiver was not returned correctly");
+    }
+
+    //getting interestFee works
+    rule getInterestFeeIntegraty(env e) {
+        uint16 interestFee = Governance.vaultStorage.interestFee;
+
+        //function call
+        uint16 interestFeeCall = interestFee();
+
+        assert(interestFeeCall == interestFee, "Interest fee was not returned correctly");
+    }
+
+    //getting interestRateModel works
+    rule getInterestRateModelIntegraty(env e) {
+        address interestRateModel = Governance.vaultStorage.interestRateModel;
+
+        //function call
+        address interestRateModelCall = interestRateModel();
+
+        assert(interestRateModelCall == interestRateModel, "Interest rate model was not returned correctly");
+    }
+
+    // getting caps works
+    rule getCapsIntegraty(env e) {
+        uint16 supplyCap = Governance.vaultStorage.supplyCap;
+        uint16 borrowCap = Governance.vaultStorage.borrowCap;
+
+        //function call
+        uint16 supplyCapCall;
+        uint16 borrowCapCall;
+        (supplyCapCall, borrowCapCall) = caps();
+
+        assert(supplyCapCall == supplyCap && borrowCapCall == borrowCap, "Caps were not returned correctly");
+    }
+
+    // getting configFlags works
+    rule getConfigFlagsIntegraty(env e) {
+        uint32 configFlags = Governance.vaultStorage.configFlags;
+        
+        //function call
+        uint32 configFlagsCall = configFlags();
+
+        assert(configFlagsCall == configFlags, "Config flags were not returned correctly");
+    }
+
+    // getting EVC works 
+    rule getEVCIntegraty(env e) {
+        address EVC = EVCHarness(e);
+
+        //function call
+        address EVCCall = EVC();
+
+        assert(EVCCall == EVC, "EVC was not returned correctly");
+    }
+
+    // getting hookConfig works
+    rule getHookConfigIntegraty(env e) {
+        address hookTarget = Governance.vaultStorage.hookTarget;
+        uint32 hookedOps = Governance.vaultStorage.hookedOps;
+
+        //function call
+        address hookTargetCall;
+        uint32 hookedOpsCall;
+        (hookTargetCall, hookedOpsCall) = hookConfig();
+
+        assert(hookTargetCall == hookTarget && hookedOpsCall == hookedOps, "Hook config was not returned correctly");
+    }
+
+    // getting liquidationCoolOffTime works
+    rule getLiquidationCoolOffTimeIntegraty(env e) {
+        uint16 liquidationCoolOffTime = Governance.vaultStorage.liquidationCoolOffTime;
+
+        //function call
+        uint16 liquidationCoolOffTimeCall = liquidationCoolOffTime();
+
+        assert(liquidationCoolOffTimeCall == liquidationCoolOffTime, "Liquidation cool off time was not returned correctly");
+    }
+
+    // getting LTVBorrow(address) works
+    rule getLTVBorrowIntegraty(env e) {
+        address collateral;
+        uint16 borrowLTV = Governance.vaultStorage.ltvLookup[collateral].borrowLTV; 
+
+        //function call
+        uint16 borrowLTVCall = LTVBorrow(e,collateral);
+
+        assert(borrowLTVCall == borrowLTV, "Borrow LTV was not returned correctly");
+    }
+
+    // getting LTVFull(address) works
+    rule getLTVFullIntegraty(env e) {
+        address collateral;
+        uint16 borrowLTV = Governance.vaultStorage.ltvLookup[collateral].borrowLTV;
+        uint16 liquidationLTV = Governance.vaultStorage.ltvLookup[collateral].liquidationLTV;
+        uint16 initialLiquidationLTV = Governance.vaultStorage.ltvLookup[collateral].initialLiquidationLTV;
+        uint48 targetTimestamp = Governance.vaultStorage.ltvLookup[collateral].targetTimestamp;
+        uint32 rampDuration = Governance.vaultStorage.ltvLookup[collateral].rampDuration;
+
+        //function call
+        uint16 borrowLTVCall;
+        uint16 liquidationLTVCall;
+        uint16 initialLiquidationLTVCall;
+        uint48 targetTimestampCall;
+        uint32 rampDurationCall;
+        (borrowLTVCall, liquidationLTVCall, initialLiquidationLTVCall, targetTimestampCall, rampDurationCall) = LTVFull(collateral);
+
+        assert(borrowLTVCall == borrowLTV && liquidationLTVCall == liquidationLTV && initialLiquidationLTVCall == initialLiquidationLTV && targetTimestampCall == targetTimestamp && rampDurationCall == rampDuration, "LTV values were not returned correctly");
+    }
+
+
+
+//-------------------------------RULES GET OK END ----------------------------------
 
 //------------------------------- INVARIENTS OK START-------------------------------
 

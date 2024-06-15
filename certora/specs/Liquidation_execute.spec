@@ -25,8 +25,6 @@ methods {
     // certora: 'private' to 'internal'
     ) internal => CVLCalculateLiquidation(liquidator, violator, collateral, desiredRepay) expect (Type.LiquidationCache memory); 
 
-
-
 }
 
 function CVLCalculateLiquidation(
@@ -84,6 +82,7 @@ rule executeLiquidationReverts(env e){
     Type.Owed owedViolatorBefore = owedGhost[violator];
     Type.Owed repayAsOwed = assetsToOwedHarness(liquidationCache.repay); //i: amount
     Type.Owed finalAmount = finalAmountDustHarness(repayAsOwed, owedViolatorBefore);
+    bool isLiquidationDisabled = isLiquidationDisabled();
 
     //FUNCTION CALL
     liquidate@withrevert(e, violator, collateral, repayAssets, minYieldBalance);
@@ -100,6 +99,9 @@ rule executeLiquidationReverts(env e){
 
 
     //assert3: if the owed remaining is bigger than the owed exact the function reverts
+
+    //assert4: if the liquidation is disabled, the function reverts
+    assert(isLiquidationDisabled => lastReverted, "Liquidation is disabled, but the function did not revert");
 
    
 
@@ -146,6 +148,8 @@ rule executeLiquidationReverts(env e){
         liability == 0 ? 0 : //i: return before calculateMaxLiquidation 
         repayAssets != max_uint256 && yieldBalanceCalculated > 0 ? yieldBalanceCapped //i: dont want to repay all and there is something to repay
         : yieldBalanceCalculated; //i: want to repay all or there is nothing to repay
+
+        bool isLiquidationDisabled = isLiquidationDisabled();
 
 
 
@@ -200,6 +204,9 @@ rule executeLiquidationReverts(env e){
 
             // //assert11: if !controllerEnabled, the function reverts
             // assert(!controllerEnabled => reverted, "Controller is not enabled, but the function did not revert");
+
+            // //assert14: if the liquidation is disabled, the function reverts
+            // assert(isLiquidationDisabled => reverted, "Liquidation is disabled, but the function did not revert");
 
 
 

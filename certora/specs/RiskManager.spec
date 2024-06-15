@@ -9,36 +9,6 @@ using EthereumVaultConnector as EVC;
 use builtin rule sanity;
 // use rule privilegedOperation;
 
-//------------------------------- RULES TEST START ----------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//------------------------------- RULES TEST END ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-
-
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
 
 //------------------------------- RULES OK START ------------------------------------
 
@@ -70,7 +40,6 @@ use builtin rule sanity;
         //FUNCTION CALL 
         f(e, arg);
 
-
         //VALUES AFTER
         RiskManagerHarness.Snapshot snapshotAfter = getSnapshotHarness();
 
@@ -88,7 +57,6 @@ use builtin rule sanity;
 
         //FUNCTION CALL 
         f(e, arg);
-
 
         //VALUES AFTER
         bool isEnabledAfter = EVC.isControllerEnabled(e, account, currentContract);
@@ -142,8 +110,6 @@ use builtin rule sanity;
         uint256 ghostInterestRate = GhostCalculatedInterestRate[currentContract];
         uint72 calculatedInterestRate = assert_uint72(calculateInterestRateHarness(e, ghostInterestRate));
 
-
-
         //FUNCTION CALL
         bytes4 returnedSelectorCall = checkVaultStatus(e);
 
@@ -152,8 +118,6 @@ use builtin rule sanity;
         bool snapshotInitalizedAfter = vaultCacheAfter.snapshotInitialized;
         RiskManagerHarness.Snapshot snapshotAfter = getSnapshotHarness();
         uint72 interestRateAfter = currentContract.vaultStorage.interestRate;
-        
-
 
         //ASSERTS
         //assert1: the returned selector is the right one
@@ -184,6 +148,7 @@ use builtin rule sanity;
         uint256 prevBorrows = toUintHarness(snapshotBefore.borrows);
         uint256 prevSupply = assert_uint256(toUintHarness(snapshotBefore.cash)+ prevBorrows);
         uint256 supply = totalAssetsHarness(vaultCacheBefore);
+        bool isCheckVaultStatusDisabled = isVaultStatusCheckDisabled(e);
 
         //FUNCTION CALL
         checkVaultStatus@withrevert(e);
@@ -199,6 +164,9 @@ use builtin rule sanity;
 
         //assert2: if snapshot is initialized, supply > supplyCap and supply > prevSupply, the function reverts
         assert(snapshotInitalizedBefore && supply > vaultCacheBefore.supplyCap && supply > prevSupply => reverted, "Supply is bigger than supplyCap and prevSupply");
+
+        //assert3: if isCheckVaultStatusDisabled, the function reverts
+        assert(isCheckVaultStatusDisabled => reverted, "CheckVaultStatus is disabled");
     }
 
     //accountLiquidityFull works
@@ -243,8 +211,6 @@ use builtin rule sanity;
         RiskManagerHarness.VaultCache vaultCache = getCurrentVaultCacheHarness();
         address[] controllers = EVC.getControllers(e, account);
 
-
-
         //FUNCTION CALL
         accountLiquidityFull@withrevert(e, account, liquidation);
         bool reverted = lastReverted;
@@ -274,8 +240,6 @@ use builtin rule sanity;
         //VALUES BEFORE
         RiskManagerHarness.VaultCache vaultCache = getCurrentVaultCacheHarness();
         address[] controllers = EVC.getControllers(e, account);
-
-
 
         //FUNCTION CALL
         accountLiquidity@withrevert(e, account, liquidation);
@@ -380,16 +344,6 @@ use builtin rule sanity;
 
         //assert2: if not reverted, the controller is disabled after
         assert(!reverted => !isEnabledAfter, "Controller is still enabled");
-        
-
     }
 
 //------------------------------- RULES OK END ------------------------------------
-
-//------------------------------- INVARIENTS OK START-------------------------------
-
-//------------------------------- INVARIENTS OK END-------------------------------
-
-//------------------------------- ISSUES OK START-------------------------------
-
-//------------------------------- ISSUES OK END-------------------------------

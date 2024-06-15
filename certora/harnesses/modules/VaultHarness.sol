@@ -7,6 +7,7 @@ import "../../../src/EVault/modules/Vault.sol";
 import "../../../src/EVault/modules/Token.sol";
 
 contract VaultHarness is VaultModule, TokenModule, AbstractBaseHarness {
+
     constructor(Integrations memory integrations) Base(integrations) {}
 
     // Linked against DummyERC20A in verification config
@@ -102,5 +103,14 @@ contract VaultHarness is VaultModule, TokenModule, AbstractBaseHarness {
 
     function getETokenAllowanceHarness(address user, address spender) external view returns (uint256) {
         return vaultStorage.users[user].eTokenAllowance[spender];
+    }
+
+    function getMAX_SANE_AMOUNT() external pure returns (uint256) {
+        return MAX_SANE_AMOUNT;
+    }
+
+    function getAssetHarness() external view returns (address) {
+        (IERC20 _asset,,) = ProxyUtils.metadata();
+        return address(_asset);
     }
 }

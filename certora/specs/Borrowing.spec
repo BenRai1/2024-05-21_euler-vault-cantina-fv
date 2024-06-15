@@ -21,79 +21,9 @@ use rule privilegedOperation;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 //------------------------------- RULES TEST END ----------------------------------
 
 //------------------------------- RULES PROBLEMS START ----------------------------------
-
-
-    //repayWithShares reverts
-    rule repayWithSharesReverts(env e) {
-        //FUNCTION PARAMETER
-        uint256 amount;
-        address receiver;
-        address onBehalfOf = actualCaller(e);
-        BorrowingHarness.VaultCache vaultCache = CVLUpdateVault();
-        bool isController = vaultIsController(onBehalfOf);
-        BorrowingHarness.Owed owedReceiver = owedGhost[receiver];
-        BorrowingHarness.Assets OwedReceiverAsAssets = owedToAssetsUpHarness(e, owedReceiver);
-
-        //Calculating amount to repay
-        BorrowingHarness.Shares sharesToRepay;
-        BorrowingHarness.Assets assetsToRepay;
-
-        sharesToRepay, assetsToRepay = repayWithSharesCalculationHarness(e, amount, sharesGhost[onBehalfOf], vaultCache, OwedReceiverAsAssets); 
-
-
-        //VALUES BEFORE
-        BorrowingHarness.Shares sharesOnBehalfOf = sharesGhost[onBehalfOf];
-
-        //FUNCTION CALL
-        repayWithShares@withrevert(e, amount, receiver);
-        bool lastRevert = lastReverted;
-
-        //VALUES AFTER
-
-        //ASSERTS
-
-
-
-        // //assert3: if sharesOnBehalfOf < sharesToRepay, then revert
-        // assert(sharesOnBehalfOf < sharesToRepay => lastRevert, "Not enough shares available to repay");
-
-        //assert4: if owed is less than assetsToRepay, then revert
-        assert(to_mathint(owedReceiver) < to_mathint(assetsToRepay) => lastRevert, "Not enough owed to repay");
-
-        //---------------ASSERTS OK START----------------
-
-        // //assert1: if e.msg.sender is not evc, then revert
-        // assert(EVC != e.msg.sender => lastRevert, "Only EVC can call repayWithShares");
-
-        // //assert2: if onBehalfOf is address(0), then revert
-        // assert(onBehalfOf == 0 => lastRevert, "On behalf of should not be address(0)");
-
-
-
-        //---------------ASSERTS OK END----------------
-
-    }
-
-
-
-
-
 
 
 
@@ -159,13 +89,11 @@ use rule privilegedOperation;
         bool vaultIsController = vaultIsController(onBehalfOf);
         bool isNotSet = isNotSetCompatibeAssetHarness(vaultCacheBefore.configFlags);
         bool isKnownNonOwnerAccount = isKnownNonOwnerAccountHarness(receiver);
-        
-        
-
+        bool isBorrowDisabled = isBorrowDisabled(e);
+ 
         //function call
         borrow@withrevert(e, amount, receiver);
         bool reverted = lastReverted;
-
 
         //ASSERTS
          //assert1: if e.msg.sender is not evc, then revert
@@ -185,6 +113,9 @@ use rule privilegedOperation;
 
         //assert6: if configflag is not set and isKnownNonOwnerAccount(receiver), then revert
         assert(amountAsAssests != 0 => isNotSet && isKnownNonOwnerAccount => reverted, "Config flag should be set and receiver should not be a known non owner account");
+
+        //assert7: if borrow is disabled, then revert
+        assert(isBorrowDisabled => reverted, "Borrow should not be disabled");
     }
 
     //borrow works
@@ -217,7 +148,6 @@ use rule privilegedOperation;
         BorrowingHarness.Owed owedOtherUserBefore = CVLGetCurrentOwed(otherUser);
         uint256 totalBorrowsBefore = BorrowingHarness.vaultStorage.totalBorrows;
 
-
         //FUNCTION CALL
         uint256 returnValueCall = borrow(e, amount, receiver);
 
@@ -232,7 +162,6 @@ use rule privilegedOperation;
         BorrowingHarness.Owed owedOtherUserAfter = CVLGetCurrentOwed(otherUser);
         uint256 userInterestAccumulatorAfter = interestAccumulatorsGhost[onBehalfOf];
         uint256 totalBorrowsAfter = BorrowingHarness.vaultStorage.totalBorrows;
-
 
         //ASSERTS
         //assert1: borrow of other user should stay the same
@@ -274,11 +203,10 @@ use rule privilegedOperation;
         fromOwedBefore, fromPrevOwedBefore = loadUserBorrowHarness(vaultCache, from);
         BorrowingHarness.Assets amountAsAssests = amount == max_uint256 ? owedToAssetsUpHarness(e,fromOwedBefore) : unitToAssetsHarness(e, amount);
         BorrowingHarness.Owed amountAsOwed = assetsToOwedHarness(e,amountAsAssests);
-
         BorrowingHarness.Owed finalAmount = finalAmountDustHarness(amountAsOwed, fromOwedBefore);
 
         //VALUES BEFORE
-
+        bool isPullDebtDisabled = isPullDebtDisabled(e);
 
         //FUNCTION CALL
         pullDebt@withrevert(e, amount, from);
@@ -300,6 +228,9 @@ use rule privilegedOperation;
 
         //assert5: if finalAmount > fromOwedBefore, then revert
         assert(finalAmount > fromOwedBefore => lastReverted, "Final amount should not be greater than the from owed");
+
+        //assert6: if pullDebt is disabled, then revert
+        assert(isPullDebtDisabled => lastReverted, "PullDebt is disabled, functions should revert");
     }
 
     //pullDebt works
@@ -362,6 +293,7 @@ use rule privilegedOperation;
         address onBehalfOf = actualCaller(e);
         BorrowingHarness.Owed owed = getCurrentOwedHarness(e,vaultCache, receiver);
         BorrowingHarness.Owed assets = toAssetHarness(amount == max_uint256 ? owed : amount); //i: amount to repay
+        bool isRepayDisabled = isRepayDisabled(e);
 
         //FUNCTION CALL
         repay@withrevert(e, amount, receiver);
@@ -376,6 +308,9 @@ use rule privilegedOperation;
 
         //assert3: if assets > owed, then revert
         assert(to_mathint(assets) > to_mathint(owed) => reverted, "Amount should not be greater than the owed");
+
+        //assert4: if repay is disabled, then revert
+        assert(isRepayDisabled => reverted, "Repay is disabled, functions should revert");
     }
 
     //repay works
@@ -438,8 +373,6 @@ use rule privilegedOperation;
         uint256 balanceOtherUserAfter = VaultAsset.balanceOf(e, otherUser);
         BorrowingHarness.Owed owedReceiverAfter = owedGhost[receiver];
         BorrowingHarness.Owed owedOtherUserAfter = owedGhost[otherUser];
-
-
 
         //ASSERTS
         //assert0: should pass even if the caller is not the controller (no controller check)//@audit integrate this in an other rule

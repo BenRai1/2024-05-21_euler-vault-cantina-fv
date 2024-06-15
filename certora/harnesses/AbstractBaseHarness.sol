@@ -105,6 +105,49 @@ abstract contract AbstractBaseHarness is Base {
         return isOperationDisabledExt(OP_SKIM);
     }
 
+    function isTransferDisabled() public returns (bool) {
+        return isOperationDisabledExt(OP_TRANSFER);
+    }
+
+    function isRepayDisabled() public returns (bool) {
+        return isOperationDisabledExt(OP_REPAY);
+    }
+
+    function isRepayWithSharesDisabled() public returns (bool) {
+        return isOperationDisabledExt(OP_REPAY_WITH_SHARES);
+    }
+
+    function isConvertFeesDisabled() public returns (bool) {
+        return isOperationDisabledExt(OP_CONVERT_FEES);
+    }
+
+    function isTouchDisabled() public returns (bool) {
+        return isOperationDisabledExt(OP_TOUCH);
+    }
+
+    function isVaultStatusCheckDisabled() public returns (bool) {
+        return isOperationDisabledExt(OP_VAULT_STATUS_CHECK);
+    }
+
+    function isBorrowDisabled() public returns (bool) {
+        return isOperationDisabledExt(OP_BORROW);
+    }
+
+    function isPullDebtDisabled() public returns (bool) {
+        return isOperationDisabledExt(OP_PULL_DEBT);
+    }
+
+    function isLiquidateDisabled() public returns (bool) {
+        return isOperationDisabledExt(OP_LIQUIDATE);
+    }
+
+    function isFlashLoanDisabled() public returns (bool) {
+        return isOperationDisabledExt(OP_FLASHLOAN);
+    }
+
+
+
+
 
     //--------------------------------------------------------------------------
     // Modifier checks
@@ -225,10 +268,7 @@ abstract contract AbstractBaseHarness is Base {
         return vaultStorage.users[user].getOwed();
     }
 
-    // function summarizingFunctionHarness(UserStorage storage self) internal view returns (Shares) {
-    //     Shares balance = Shares.wrap(0);
-    //     return balance;
-    // }
+
 
 
     

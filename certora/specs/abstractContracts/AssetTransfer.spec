@@ -26,23 +26,6 @@ function CVLSaveTransfer(address token, address from, address to, uint256 value)
 
 ghost mapping(address => mapping (address => uint256)) balancesGhost;
 
-//only functions who can change the state of the contract
-
-//------------------------------- RULES TEST START ----------------------------------
-
-
-
-
-
-
-
-
-
-//------------------------------- RULES TEST END ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
 
 //------------------------------- RULES OK START ------------------------------------
     //can only change balances
@@ -193,10 +176,3 @@ ghost mapping(address => mapping (address => uint256)) balancesGhost;
 
 //------------------------------- RULES OK END ------------------------------------
 
-//------------------------------- INVARIENTS OK START-------------------------------
-
-//------------------------------- INVARIENTS OK END-------------------------------
-
-//------------------------------- ISSUES OK START-------------------------------
-
-//------------------------------- ISSUES OK END-------------------------------

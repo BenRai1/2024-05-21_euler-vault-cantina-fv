@@ -14,12 +14,10 @@ use builtin rule sanity;
 //invariants: vaultStorage.cash should never be smaller than the balance of the vault
 
 //------------------------------- RULES TEST START ----------------------------------
-    //@audit write rules for view functions (??)
     //invariants:
     // // 1. cash should never be bigger than the balance of the vault
     // invariant cashShouldNeverBeBiggerThanBalance(env e) 
     // Vault.vaultStorage.cash <= userAssets(e, currentContract);
-
 
 
 
@@ -358,7 +356,6 @@ use builtin rule sanity;
         uint256 allowanceOwnerForOnBehalfOfBefore = shareAllowanceGhost[onBehalfOf][owner]; //i: onBehalfOf => owner
         uint256 allowanceOwnerForOtherUserBefore = shareAllowanceGhost[otherUser][owner]; //i: otherUser => owner
 
-
         //FINAL VALUES
         Type.Assets finalAssets = uintToAssetsHarness(amount);
         Type.Shares finalShares = assetsToSharesUpHarness(finalAssets, vaultCacheBefore);
@@ -394,7 +391,6 @@ use builtin rule sanity;
 
         //assert7: allowance onBehalfOf => owner should not change
         assert(allowanceOwnerForOnBehalfOfBefore == allowanceOwnerForOnBehalfOfAfter, "Allowance owner => onBehalfOf should not change");
-        
     }
 
      //withdraw works allowances
@@ -423,7 +419,6 @@ use builtin rule sanity;
         uint256 allowanceOtherUserForOnBehalfOfBefore = shareAllowanceGhost[onBehalfOf][otherUser]; //i: onBehalfOf => otherUser
         uint256 allowanceOwnerForOnBehalfOfBefore = shareAllowanceGhost[onBehalfOf][owner]; //i: onBehalfOf => owner
         uint256 allowanceOwnerForOtherUserBefore = shareAllowanceGhost[otherUser][owner]; //i: otherUser => owner
-
 
         //FINAL VALUES
         Type.Assets finalAssets = uintToAssetsHarness(amount);
@@ -569,7 +564,6 @@ use builtin rule sanity;
 
         //assert4: if finalAssets = 0, the returnValueCall should be 0
         assert(finalAssets == 0 => returnValueCall == 0, "Return value should be 0 if finalAssets is 0");
-
     }
 
     //skim works
@@ -669,7 +663,6 @@ use builtin rule sanity;
         mathint sharesReceiverAfter = shareBalanceGhost[receiver];
         mathint totalSharesAfter = totalSharesGhost;
 
-
         //ASSERTS
         //assert1: balanceOf other user does not change
         assert(balanceOtherUserBefore == balanceOtherUserAfter, "Balance of other user should not change");
@@ -739,7 +732,6 @@ use builtin rule sanity;
         mathint sharesOtherUserAfter = shareBalanceGhost[otherUser];
         mathint sharesReceiverAfter = shareBalanceGhost[receiver];
         mathint totalSharesAfter = totalSharesGhost;
-
 
         //ASSERTS
         //assert1: balanceOf other user does not change
@@ -866,7 +858,6 @@ use builtin rule sanity;
         //ASSERTS
         //assert1: returnValueCall should be true
         assert(returnValueCall == true, "Return value should be true");
-  
 
         //assert3: shares should decrease for from by finalShares
         assert(sharesFromBefore - finalShares == to_mathint(sharesFromAfter), "Shares of from should decrease by finalShares");
@@ -898,89 +889,6 @@ use builtin rule sanity;
     } 
 
 //------------------------------- RULES OK END ------------------------------------
-
-//------------------------------- INVARIENTS OK START-------------------------------
-
-//------------------------------- INVARIENTS OK END-------------------------------
-
-//------------------------------- ISSUES OK START-------------------------------
-
-//------------------------------- ISSUES OK END-------------------------------
-//--------------------------------- PUBLIC MUTATION START-----------------------
-
-  //skim works
-    rule skimWorks3(env e){
-        //FUNCTION PARAMETER
-        uint256 amount;
-        require(amount == max_uint256);//@audit to be able to see valid run
-        address receiver;
-        address otherUser;
-        require(otherUser != receiver);
-        Type.VaultCache vaultCacheBefore = getCurrentVaultCacheHarness();
-        address collateral = vaultCacheBefore.asset;
-        require(collateral == VaultAsset);
-        Type.Assets cashBefore = vaultCacheBefore.cash;
-
-        //VALUES BEFORE
-        mathint totalSharesBefore = totalSharesGhost;
-        mathint sharesReceiverBefore = shareBalanceGhost[receiver];
-        mathint sharesOtherUserBefore = shareBalanceGhost[otherUser];
-        //Balances before
-        uint256 balanceVaultBefore = VaultAsset.balanceOf(e,currentContract);
-        require(balanceVaultBefore != 0);//@audit to be able to see valid run
-        uint256 balanceReceiverBefore = VaultAsset.balanceOf(e,receiver);
-        uint256 balanceOtherUserBefore = VaultAsset.balanceOf(e,otherUser);
-        Type.Assets assetsAvailable = to_mathint(balanceVaultBefore) <= to_mathint(vaultCacheBefore.cash) ? 0 : uintToAssetsHarness(require_uint256(balanceVaultBefore - vaultCacheBefore.cash));
-
-        //FINAL VALUES
-        Type.Assets finalAssets = amount == max_uint256 ? assetsAvailable : uintToAssetsHarness(amount);
-        Type.Shares finalShares = assetsToSharesDownHarness(finalAssets, vaultCacheBefore);
-
-        //FUNCTION CALL
-        uint256 returnValueCall = skim(e, amount, receiver);
-
-        //VALUES AFTER
-        Type.VaultCache vaultCacheAfter = getCurrentVaultCacheHarness();
-        //Balances after
-        uint256 balanceVaultAfter = VaultAsset.balanceOf(e,currentContract);
-        uint256 balanceReceiverAfter = VaultAsset.balanceOf(e,receiver);
-        uint256 balanceOtherUserAfter = VaultAsset.balanceOf(e,otherUser);
-        mathint totalSharesAfter = totalSharesGhost;
-        mathint sharesReceiverAfter = shareBalanceGhost[receiver];
-        mathint sharesOtherUserAfter = shareBalanceGhost[otherUser];
-
-        //ASSERTS
-        //assert5: finalAssets !=0 => vaultChash should be increased by finalAssets
-        assert(finalAssets != 0 => vaultCacheBefore.cash + finalAssets == to_mathint(vaultCacheAfter.cash), "Cash of vault should increase by finalAssets");
-
-        // assert(false);
-
-
-        // //assert6: finalAssets !=0 => totalShares should increase by finalShares
-        // assert(finalAssets != 0 => totalSharesBefore + finalShares == to_mathint(totalSharesAfter), "Total shares should increase by finalShares");
-
-        // //assert7: finalAssets !=0 => receiverShares should be increased by finalShares
-        // assert(finalAssets != 0 => sharesReceiverBefore + finalShares == to_mathint(sharesReceiverAfter), "Shares of receiver should increase by finalShares");
-
-        // //assert8: otherUserShares should stay the same
-        // assert(sharesOtherUserBefore == sharesOtherUserAfter, "Shares of other user should stay the same");
-    }
-
-//--------------------------------- PUBLIC MUTATION END-----------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
