@@ -7,7 +7,7 @@ methods {
     function reentrancyLockedHarness() external returns (bool) envfree;
     function getControlersExt(address account) external returns (address[] memory) envfree;
     function _.uintToAssetsUpHarness(uint256 amount) external envfree;
-    function _.assetToOwedHarness(Type.Assets self) external envfree;
+    function _.assetsToOwedHarness(Type.Assets self) external envfree;
     function owedToAssetsUpHarness(Type.Owed amount) external returns (Type.Assets) envfree;
     function isNotSetCompatibeAssetHarness(Type.Flags self) external returns (bool) envfree;
     function isKnownNonOwnerAccountHarness(address account) external returns (bool) envfree;
@@ -52,6 +52,7 @@ definition BASE_HARNESS_FUNCTIONS(method f) returns bool =
     f.selector == sig:isSkimDisabled().selector ||
     f.selector == sig:isWithdrawDisabled().selector ||
     f.selector == sig:vaultCacheOracleConfigured().selector ||
+    f.selector == sig:getBalanceAndForwarderExt(address).selector ||
     f.selector == sig:reentrancyLockedHarness().selector;
 
 ///////////////// DEFINITIONS END /////////////////////

@@ -278,7 +278,7 @@ abstract contract GovernanceModule is IGovernance, BalanceUtils, BorrowUtils, LT
 
         // If new LTV is higher or equal to current, as per ramping configuration, it should take effect immediately 
         
-        //@audit-issue one wants to set the final liquidation LTV hight that it currently is (but with a ramp becasue rampDuration > 0) => should be set right away but the function reverts => should set the rampDuration to 0 and the rampDuration to 0.
+        //i: just a reminder, that the ramp duration should be 0
         if (newLiquidationLTV >= currentLTV.getLTV(true) && rampDuration > 0) revert E_LTVLiquidation();
 
         LTVConfig memory newLTV = currentLTV.setLTV(newBorrowLTV, newLiquidationLTV, rampDuration);

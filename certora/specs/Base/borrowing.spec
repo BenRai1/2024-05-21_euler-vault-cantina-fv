@@ -46,6 +46,9 @@ methods {
 
     function _.setBalance(Type.PackedUserSlot data, Type.Shares balance) internal => CVLSetBalance(data, balance) expect void;
 
+    function _.useViewCaller() internal => CVLuseViewCaller() expect address;
+
+
 
 }
 
@@ -54,13 +57,23 @@ methods {
 
 ///////////////// DEFINITIONS START /////////////////////
 
-    definition nonReentrantFunctions(method f) returns bool =
+    definition NONREENTRANT_FUNCTIONS(method f) returns bool =
     f.selector == sig:borrow(uint256, address).selector ||
     f.selector == sig:flashLoan(uint256, bytes).selector ||
     f.selector == sig:pullDebt(uint256, address).selector ||
     f.selector == sig:repay(uint256, address).selector ||
     f.selector == sig:repayWithShares(uint256, address).selector ||
     f.selector == sig:touch().selector;
+
+    definition NONREENTRANTVIEW_FUNCTIONS(method f) returns bool =
+    f.selector == sig:cash().selector ||
+    f.selector == sig:debtOf(address).selector ||
+    f.selector == sig:debtOfExact(address).selector ||
+    f.selector == sig:interestAccumulator().selector ||
+    f.selector == sig:interestRate().selector ||
+    f.selector == sig:totalBorrows().selector ||
+    f.selector == sig:totalBorrowsExact().selector;
+
 
     definition BORROWING_HARNESS_FUNCTIONS(method f) returns bool =
     f.selector == sig:getBalanceAndForwarderExt(address).selector ||
@@ -76,9 +89,22 @@ methods {
 
 
 
+
+
+
+
+
+
 ///////////////// DEFINITIONS END /////////////////////
 
 ////////////////// FUNCTIONS START //////////////////////
+    function CVLuseViewCaller() returns address {
+        return viewCallerGhost;
+    }
+
+    ghost address viewCallerGhost;
+
+
     function CVLUpdateVault() returns Type.VaultCache {
             Type.VaultCache vaultCache = getCurrentVaultCacheHarness();
             return vaultCache;

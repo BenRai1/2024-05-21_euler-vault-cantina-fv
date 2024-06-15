@@ -82,7 +82,7 @@ rule executeLiquidationReverts(env e){
 
     //VALUES BEFORE
     Type.Owed owedViolatorBefore = owedGhost[violator];
-    Type.Owed repayAsOwed = assetToOwedHarness(liquidationCache.repay); //i: amount
+    Type.Owed repayAsOwed = assetsToOwedHarness(liquidationCache.repay); //i: amount
     Type.Owed finalAmount = finalAmountDustHarness(repayAsOwed, owedViolatorBefore);
 
     //FUNCTION CALL
@@ -281,7 +281,7 @@ rule executeLiquidationReverts(env e){
         bool socializeDebt = socializeDebtHarness(vaultCache.configFlags);
         bool notAllRepayed = to_mathint(owedViolatorBefore) > to_mathint(finalRepay);
         bool adjustOwedRemainingViolator = hasNoCollateral && notAllRepayed && socializeDebt;
-        mathint remainingOwedViolator = owedViolatorBefore - assetToOwedHarness(finalRepay);
+        mathint remainingOwedViolator = owedViolatorBefore - assetsToOwedHarness(finalRepay);
 
 
 

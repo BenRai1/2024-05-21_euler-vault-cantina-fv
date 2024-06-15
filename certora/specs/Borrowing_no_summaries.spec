@@ -15,6 +15,8 @@ use rule privilegedOperation;
 // 1. totalShares should be equal to sum of all user shares (+ ghosttShares that are burned in the beginning(??))
 
 
+
+
     //touch works //@audit not sure how to do this since initVaultCache is private
     rule touchWorks(env e) {
         //VALUES BEFORE
@@ -116,7 +118,9 @@ use rule privilegedOperation;
 
         //---------------------Asserts OK END----------------------
 
-    }    
+    }   
+
+
 
 
         
@@ -149,24 +153,7 @@ use rule privilegedOperation;
 
 //------------------------------- RULES PROBLEMS START ----------------------------------
 
-    //only change user shares //@audit timeout for pullDebt
-    rule onlyChangeUserShares(env e, method f, calldataarg args) filtered{f -> !f.isView && !f.isPure && !BASE_HARNESS_FUNCTIONS(f) && !BORROWING_HARNESS_FUNCTIONS(f)}{
-        //FUNCTION PARAMETER
-        address user;
-        Type.Shares userSharesBefore = getUserSharesHarness(user);
-        requireInvariant vaultInterAccumGreaterOrEqualUserInterAccum(e,user);
 
-
-        //FUNCTION CALL
-        f(e, args);
-
-        //VALUES AFTER
-        Type.Shares userSharesAfter = getUserSharesHarness(user);
-
-        //ASSERTS
-        assert(userSharesAfter != userSharesBefore =>
-        f.selector == sig:repayWithShares(uint256, address).selector, "Should not change user shares");
-    }
 
     //only should decrease user shares //@audit timeout for pullDebt
     rule onlyDecreaseUserShares(env e, method f, calldataarg args) filtered{f -> !f.isView && !f.isPure && !BASE_HARNESS_FUNCTIONS(f) && !BORROWING_HARNESS_FUNCTIONS(f)}{
@@ -275,6 +262,8 @@ use rule privilegedOperation;
 
         //ASSERTS
         assert(owedAfter > owedBefore =>
+        f.selector == sig:repay(uint256, address).selector ||
+        f.selector == sig:repayWithShares(uint256, address).selector ||
         f.selector == sig:borrow(uint256, address).selector ||
         f.selector == sig:pullDebt(uint256, address).selector,
         "Should not increase user owed");
@@ -302,6 +291,25 @@ use rule privilegedOperation;
 //------------------------------- RULES PROBLEMS END ----------------------------------
 
 //------------------------------- RULES OK START ------------------------------------
+
+    //only change user shares //@audit timeout for pullDebt:fixed
+    rule onlyChangeUserShares(env e, method f, calldataarg args) filtered{f -> !f.isView && !f.isPure && !BASE_HARNESS_FUNCTIONS(f) && !BORROWING_HARNESS_FUNCTIONS(f)}{
+        //FUNCTION PARAMETER
+        address user;
+        Type.Shares userSharesBefore = getUserSharesHarness(user);
+        requireInvariant vaultInterAccumGreaterOrEqualUserInterAccum(e,user);
+
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        Type.Shares userSharesAfter = getUserSharesHarness(user);
+
+        //ASSERTS
+        assert(userSharesAfter != userSharesBefore =>
+        f.selector == sig:repayWithShares(uint256, address).selector, "Should not change user shares");
+    }
 
     //touch reverts
     rule touchReverts(env e) {

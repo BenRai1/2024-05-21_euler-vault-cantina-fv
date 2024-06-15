@@ -1,6 +1,7 @@
 import "./Base/liquidation.spec";
 using EthereumVaultConnector as EVC;
 using DummyERC20A as Collateral;
+using LiquidationHarness as LiquidationHarness;
 
 
 
@@ -13,6 +14,21 @@ use rule privilegedOperation;
 // when liquidating, the amount of debt should stay the same between the liquidator and the violator
 
 //------------------------------- RULES TEST START ----------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     //liquidate reverts
@@ -61,14 +77,14 @@ use rule privilegedOperation;
         //ASSERTS
 
 
-        // //assert9: if the desired repay is higher than the calculated repay, the function reverts//@audit time out
-        // assert(liability != 0 && repayAssets != max_uint256 && to_mathint(repayAssets) > to_mathint(repayCalculated) => reverted, "Desired repay is higher than the calculated repay, but the function did not revert");
+        //assert9: if the desired repay is higher than the calculated repay, the function reverts//@audit time out
+        assert(liability != 0 && repayAssets != max_uint256 && to_mathint(repayAssets) > to_mathint(repayCalculated) => reverted, "Desired repay is higher than the calculated repay, but the function did not revert");
 
 
 
 
-        //assert12: minYieldBalance > finalYieldBalance, the function reverts //@audit does not work, check why: CollateralValue != 0
-        assert(liability != 0 && collateralValue != 0 && yieldBalanceCalculated > 0 && to_mathint(minYieldBalance) > finalYieldBalance => reverted, "minYieldBalance is higher than the finalYieldBalance, but the function did not revert");
+        // //assert12: minYieldBalance > finalYieldBalance, the function reverts //@audit does not work, check why: CollateralValue != 0
+        // assert(liability != 0 && collateralValue != 0 && yieldBalanceCalculated > 0 && to_mathint(minYieldBalance) > finalYieldBalance => reverted, "minYieldBalance is higher than the finalYieldBalance, but the function did not revert");
 
         // //assert13: if the amount that should be repayed is bigger than the fromOwed, the function reverts
 
@@ -185,7 +201,7 @@ use rule privilegedOperation;
         bool socializeDebt = socializeDebtHarness(vaultCache.configFlags);
         bool notAllRepayed = to_mathint(owedViolatorBefore) > to_mathint(finalRepay);
         bool adjustOwedRemainingViolator = hasNoCollateral && notAllRepayed && socializeDebt;
-        mathint remainingOwedViolator = owedViolatorBefore - assetToOwedHarness(finalRepay);
+        mathint remainingOwedViolator = owedViolatorBefore - assetsToOwedHarness(finalRepay);
 
 
 
@@ -240,6 +256,116 @@ use rule privilegedOperation;
 
 //------------------------------- RULES OK START ------------------------------------
 //
+
+    //only changes owed
+    rule onlyChangesOwed(env e, method f, calldataarg args) filtered{
+        f-> !BASE_HARNESS_FUNCTIONS(f) && !f.isView && !f.isPure
+    }{
+        //VALUES BEFORE
+        address account;
+        Type.Owed owedBefore = owedGhost[account];
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        Type.Owed owedAfter = owedGhost[account];
+
+        //ASSERTS
+        assert(owedBefore != owedAfter =>
+        f.selector == sig:liquidate(address,address,uint256,uint256).selector, "Owed has not changed correctly");
+    }
+
+    //only changes totalBorrows
+    rule onlyChangesTotalBorrows(env e, method f, calldataarg args) filtered{
+        f-> !BASE_HARNESS_FUNCTIONS(f) && !f.isView && !f.isPure
+    }{
+        //VALUES BEFORE
+        LiquidationHarness.VaultCache vaultCache = CVLUpdateVault();
+        Type.Owed totalBorrowBefore = vaultCache.totalBorrows;
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        LiquidationHarness.VaultCache vaultCacheAfter = CVLUpdateVault();
+        Type.Owed totalBorrowAfter = vaultCacheAfter.totalBorrows;
+
+        //ASSERTS
+        assert(totalBorrowBefore != totalBorrowAfter =>
+        f.selector == sig:liquidate(address,address,uint256,uint256).selector, "Total borrows has not changed correctly");
+    }
+
+    //only changes userInterestAccumulator
+    rule onlyChangesUserInterestAccumulator(env e, method f, calldataarg args) filtered{
+        f-> !BASE_HARNESS_FUNCTIONS(f) && !f.isView && !f.isPure
+    }{
+        //VALUES BEFORE
+        address account;
+        uint256 interestAccumulatorBefore = interestAccumulatorsGhost[account];
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        uint256 interestAccumulatorAfter = interestAccumulatorsGhost[account];
+
+        //ASSERTS
+        assert(interestAccumulatorBefore != interestAccumulatorAfter =>
+        f.selector == sig:liquidate(address,address,uint256,uint256).selector, "Interest accumulator has not changed correctly");
+    }
+
+    //only changes collateral balances
+    rule onlyChangesCollateralBalances(env e, method f, calldataarg args) filtered{
+        f-> !BASE_HARNESS_FUNCTIONS(f) && !f.isView && !f.isPure
+    }{
+        //VALUES BEFORE
+        address account;
+        require(getAssetHarness(e) == Collateral);
+        uint256 balanceBefore = Collateral.balanceOf(e, account);
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        uint256 balanceAfter = Collateral.balanceOf(e, account);
+
+        //ASSERTS
+        assert(balanceBefore != balanceAfter =>
+        f.selector == sig:liquidate(address,address,uint256,uint256).selector, "Collateral balance has not changed correctly");
+    }
+
+    //nonReentrantView modifier works
+    rule nonReentrantViewWorks(env e, method f, calldataarg args) filtered{
+        f-> NONREENTRANTVIEW_FUNCTIONS(f)
+    }{
+        //VALUES BEFORE
+        bool reentrancyLocked = LiquidationHarness.vaultStorage.reentrancyLocked;
+        address hookTarget = LiquidationHarness.vaultStorage.hookTarget;
+        bool shouldRevert = e.msg.sender != hookTarget && !(e.msg.sender == currentContract && CVLUseViewCaller() == hookTarget);
+
+        //FUNCTION CALL
+        f@withrevert(e, args);
+        bool reverted = lastReverted;
+
+        //ASSERTS
+        assert(reentrancyLocked && shouldRevert => reverted, "Function call should revert");
+    }
+
+    //nonReentrant modifier works
+    rule nonReentrantWorks(env e, method f, calldataarg args) filtered{
+        f-> NONREENTRANT_FUNCTIONS(f)
+    }{
+        //VALUES BEFORE
+        bool reentrancyLocked = LiquidationHarness.vaultStorage.reentrancyLocked;
+
+        //FUNCTION CALL
+        f@withrevert(e, args);
+
+        //ASSERTS
+        assert(reentrancyLocked => lastReverted, "Function call should revert");
+
+    }
 
     //calculateLiquidation works
     rule calculateLiquidationIntegraty(env e) {

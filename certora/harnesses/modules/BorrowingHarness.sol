@@ -162,6 +162,11 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
         return IERC20(vaultcache.asset).balanceOf(user);
     }
 
+    function summarizingFunctionHarness(UserStorage storage userStorage) internal view returns (Shares) {
+        // return userStorage.getBalance();
+        return Shares.wrap(0);
+    }
+
     
 
 

@@ -89,6 +89,16 @@ import "./Base/base.spec";
 
 // }
 
+//initOperation
+//should revert when the red stuff happens
+//should check account accountToCheck
+//depending on the operation, function should check controller
+//depending on the operation, function should not check controller
+
+
+//invariants??
+
+
 //------------------------------- RULES TEST END ----------------------------------
 
 //------------------------------- RULES PROBLEMS START ----------------------------------

@@ -239,4 +239,9 @@ contract LiquidationHarness is AbstractBaseHarness, Liquidation {
         } 
         return amount;  
     }
+
+    function getAssetHarness() external view returns (address) {
+        (IERC20 asset, ,) = ProxyUtils.metadata();
+        return address(asset);
+    }
 }

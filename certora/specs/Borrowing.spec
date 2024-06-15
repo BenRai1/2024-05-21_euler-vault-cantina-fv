@@ -18,7 +18,7 @@ use rule privilegedOperation;
 
 
 
-    //only function to change collateral balances
+
 
 
 
@@ -101,6 +101,23 @@ use rule privilegedOperation;
 //------------------------------- RULES PROBLEMS START ----------------------------------
 
 //------------------------------- RULES OK START ------------------------------------
+
+    //nonReentrantView modifier works
+    rule nonReentrantViewWorks(env e, method f, calldataarg args) filtered{
+        f-> NONREENTRANTVIEW_FUNCTIONS(f)
+    }{
+        //VALUES BEFORE
+        bool reentrancyLocked = BorrowingHarness.vaultStorage.reentrancyLocked;
+        address hookTarget = BorrowingHarness.vaultStorage.hookTarget;
+        bool shouldRevert = e.msg.sender != hookTarget && !(e.msg.sender == currentContract && CVLuseViewCaller() == hookTarget);
+
+        //FUNCTION CALL
+        f@withrevert(e, args);
+        bool reverted = lastReverted;
+
+        //ASSERTS
+        assert(reentrancyLocked && shouldRevert => reverted, "Function call should revert");
+    }
 
     //only functions to change vaultStorage cash
     rule onlyToChangeVaultStorageCash(env e, method f, calldataarg args) filtered{
@@ -188,7 +205,7 @@ use rule privilegedOperation;
             amount == max_uint256 ? 
             cashBefore : 
             amountAsAssests;
-        BorrowingHarness.Owed targetAmountAsOwed = assetToOwedHarness(e,targetAmountAsAssets);  
+        BorrowingHarness.Owed targetAmountAsOwed = assetsToOwedHarness(e,targetAmountAsAssets);  
 
         //VALUES BEFORE
         //balances before
@@ -256,7 +273,7 @@ use rule privilegedOperation;
         BorrowingHarness.Owed fromPrevOwedBefore;
         fromOwedBefore, fromPrevOwedBefore = loadUserBorrowHarness(vaultCache, from);
         BorrowingHarness.Assets amountAsAssests = amount == max_uint256 ? owedToAssetsUpHarness(e,fromOwedBefore) : unitToAssetsHarness(e, amount);
-        BorrowingHarness.Owed amountAsOwed = assetToOwedHarness(e,amountAsAssests);
+        BorrowingHarness.Owed amountAsOwed = assetsToOwedHarness(e,amountAsAssests);
 
         BorrowingHarness.Owed finalAmount = finalAmountDustHarness(amountAsOwed, fromOwedBefore);
 
@@ -300,7 +317,7 @@ use rule privilegedOperation;
             amount == max_uint256 ? 
             owedToAssetsUpHarness(e,fromOwedBefore) : 
             amountAsAssests;
-        BorrowingHarness.Owed targetAmountAsOwed = assetToOwedHarness(e,targetAmountAsAssets);
+        BorrowingHarness.Owed targetAmountAsOwed = assetsToOwedHarness(e,targetAmountAsAssets);
         BorrowingHarness.Owed finalAmountAsOwed = finalAmountDustHarness(e,targetAmountAsOwed, fromOwedBefore);
 
         //TARGET VALUES
@@ -384,7 +401,7 @@ use rule privilegedOperation;
         mathint owedRemainingAsAssetsMathint = owedAssetUp - targetAmountAsAssets;
         require(owedRemainingAsAssetsMathint <= max_uint112);
         BorrowingHarness.Assets owedRemainingAsAssets = assert_uint112(owedRemainingAsAssetsMathint); //@audit casting deos not work
-        BorrowingHarness.Owed owedRemainingAsOwed = assetToOwedHarness(e, owedRemainingAsAssets);
+        BorrowingHarness.Owed owedRemainingAsOwed = assetsToOwedHarness(e, owedRemainingAsAssets);
 
         BorrowingHarness.Assets cashBefore = BorrowingHarness.vaultStorage.cash;
         BorrowingHarness.VaultCache vaultCacheBefore = CVLUpdateVault();
@@ -464,7 +481,7 @@ use rule privilegedOperation;
     }
 
     //functions need to revert if reentrancy is locked
-    rule reentrancyLockIntegraty(env e, method f, calldataarg args) filtered{f -> nonReentrantFunctions(f)}{
+    rule reentrancyLockIntegraty(env e, method f, calldataarg args) filtered{f -> NONREENTRANT_FUNCTIONS(f)}{
  
         bool lockedBefore = reentrancyLockedHarness();
         f@withrevert(e, args);

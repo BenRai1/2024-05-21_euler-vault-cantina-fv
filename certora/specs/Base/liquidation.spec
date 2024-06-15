@@ -25,6 +25,9 @@ methods {
 
     function DummyERC20A.balanceOf(address account) external returns (uint256) => CVLBalanceOfCollateral(account);
 
+    //summaries
+    function _.useViewCaller() internal => CVLUseViewCaller() expect address;
+
 
 }
 
@@ -32,9 +35,24 @@ methods {
 
 ///////////////// DEFINITIONS START /////////////////////
 
+definition NONREENTRANT_FUNCTIONS(method f) returns bool =
+f.selector == sig:liquidate(address,address,uint256,uint256).selector;
+
+definition NONREENTRANTVIEW_FUNCTIONS(method f) returns bool =
+f.selector == sig:checkLiquidation(address,address,address).selector;
+
+
+
 ///////////////// DEFINITIONS END /////////////////////
 
 ////////////////// FUNCTIONS START //////////////////////
+
+    function CVLUseViewCaller() returns address {
+        return viewCallerGhost;
+    }
+
+    ghost address viewCallerGhost;
+
     function CVLLoadVault() returns Type.VaultCache {
             Type.VaultCache vaultCache = getCurrentVaultCacheHarness();
             return vaultCache;

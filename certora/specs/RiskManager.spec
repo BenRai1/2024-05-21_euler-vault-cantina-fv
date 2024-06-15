@@ -12,24 +12,7 @@ use builtin rule sanity;
 //------------------------------- RULES TEST START ----------------------------------
 
 
-    //function needs to revert if nonReentrantView modifier reverts
-    rule nonReentrantViewModifier(env e, method f, calldataarg arg) filtered{f->
-        f.selector == sig:accountLiquidity(address,bool).selector ||
-        f.selector == sig:accountLiquidityFull(address,bool).selector}{
-        //VALUES BEFORE
-        bool reentrancyLocked = reentrancyLockedHarness();
-        address hookTarget = getHookTargetHarness();
-        address msgSender = e.msg.sender;
-        address viewCaller = useViewCallerHarness();
 
-        //FUNCTION CALL
-        f@withrevert(e,arg);
-        bool reverted = lastReverted;
-
-        //ASSERTS
-        //assert1: if reentrancyLocked is true, msg.sender is not hookTarget and msg.sender = currentContract and viewCaller == hookTarget, the function should revert
-        assert(reentrancyLocked && msgSender != hookTarget && !(msgSender == currentContract && viewCaller == hookTarget) => reverted, "Function should revert");
-    }
 
 
 
@@ -58,6 +41,25 @@ use builtin rule sanity;
 //------------------------------- RULES PROBLEMS START ----------------------------------
 
 //------------------------------- RULES OK START ------------------------------------
+
+    //function needs to revert if nonReentrantView modifier reverts
+    rule nonReentrantViewModifier(env e, method f, calldataarg arg) filtered{f->
+        f.selector == sig:accountLiquidity(address,bool).selector ||
+        f.selector == sig:accountLiquidityFull(address,bool).selector}{
+        //VALUES BEFORE
+        bool reentrancyLocked = reentrancyLockedHarness();
+        address hookTarget = getHookTargetHarness();
+        address msgSender = e.msg.sender;
+        address viewCaller = useViewCallerHarness();
+
+        //FUNCTION CALL
+        f@withrevert(e,arg);
+        bool reverted = lastReverted;
+
+        //ASSERTS
+        //assert1: if reentrancyLocked is true, msg.sender is not hookTarget and msg.sender = currentContract and viewCaller == hookTarget, the function should revert
+        assert(reentrancyLocked && msgSender != hookTarget && !(msgSender == currentContract && viewCaller == hookTarget) => reverted, "Function should revert");
+    }
 
     //only spesific functions should change snapshot 
     rule onlyChangeSnapshot(env e, method f, calldataarg arg) filtered{f->
@@ -168,8 +170,6 @@ use builtin rule sanity;
 
         //assert5: vaultStorage.initeresRate is equal to calculated interest rate
         assert(irm != 0 => interestRateAfter == calculatedInterestRate, "Interest rate does not match");
-
-        assert(false);
     }
 
     //checkVaultStatus reverts

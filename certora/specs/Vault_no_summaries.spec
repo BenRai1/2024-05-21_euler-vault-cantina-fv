@@ -642,7 +642,7 @@ use builtin rule sanity;
 
     }
 
-        //nonReentrantView modifier works
+    //nonReentrantView modifier works
     rule nonReentrantViewWorks(env e, method f, calldataarg args) filtered{
         f-> NONREENTRANTVIEW_FUNCTIONS(f)
     }{
