@@ -48,7 +48,7 @@ import "./abstractBase.spec";
 
     function _.isHookTarget() external => NONDET;
     //Function summary
-    // function Base.initOperation(uint32 operation, address accountToCheck) internal returns (GovernanceHarness.VaultCache memory, address) with(env e) => CVLInitOperation(e, operation, accountToCheck);
+
 
     function Cache.updateVault() internal returns (GovernanceHarness.VaultCache memory) with(env e) => CVLUpdateVault();
 
@@ -133,11 +133,7 @@ import "./abstractBase.spec";
 ///////////////// DEFINITIONS END /////////////////////
 
 ////////////////// FUNCTIONS START //////////////////////
-    function CVLInitOperation(env e, uint32 operation, address accountToCheck) returns (GovernanceHarness.VaultCache, address) {
-        address onBehalfOf = actualCaller(e);
-        GovernanceHarness.VaultCache cache = getCurrentVaultCacheHarness();
-        return (cache, onBehalfOf);
-    }
+
 
     function CVLUpdateVault() returns GovernanceHarness.VaultCache {
         GovernanceHarness.VaultCache vaultCache = getCurrentVaultCacheHarness();

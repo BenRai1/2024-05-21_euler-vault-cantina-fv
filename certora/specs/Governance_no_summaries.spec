@@ -9,7 +9,7 @@ use builtin rule sanity;
 use rule privilegedOperation;
 
     //convertFees reverts 
-    rule convertFeesRevertIntegraty(env e) { //@audit-issue reverts for assert 1 becasue of summary of initOperation => spec without the summary
+    rule convertFeesRevertIntegraty(env e) { 
         //GENERAL VARIABLES
         address actualCaller = actualCaller(e);
         address user;
@@ -21,6 +21,8 @@ use rule privilegedOperation;
         (protocolReceiver, protocolFee) = ProtocolConfig.protocolFeeConfig(e,currentContract);
         //Balances
         GovernanceHarness.PackedUserSlot userDataBefore = getUserStorageDataHarness(user);
+        bool opSet = isConvertFeesDisabled(e);
+        address hookTarget = getHookTargetHarness();
 
         //FUNCTION CALL
         convertFees@withrevert(e);
@@ -44,4 +46,8 @@ use rule privilegedOperation;
         
         //assert3: if the protocolReceiver = 0 address, revert
         assert(vaultCacheBefore.accumulatedFees != 0 && protocolReceiver == 0 && protocolFee != 0 => reverted, "Protocol receiver is 0");
+
+        // //assert4: if opSet && hookTarget == 0, revert
+        // assert(opSet && hookTarget == 0 => reverted, "HookOps is set and hookTarget is 0");
+
     }
