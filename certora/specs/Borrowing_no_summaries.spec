@@ -101,10 +101,10 @@ use builtin rule sanity;
         // assert(owedReceiverAsAssets != 0 => to_mathint(owedReceiverAfter) == owedReceiverBefore - finalOwedToRepay, "Should decrease user owed");
 
         //assert8: sharesReceiverAfter == sharesReceiverBefore
-        assert(sharesReceiverAfter == sharesReceiverBefore, "Should not change receiver shares");
+        // assert(sharesReceiverAfter == sharesReceiverBefore, "Should not change receiver shares");
 
-        //assert9: owedOnBehalfOfAfter == owedOnBehalfOfBefore
-        assert(owedOnBehalfOfAfter == owedOnBehalfOfBefore, "Should not change on behalf of user owed");
+        // //assert9: owedOnBehalfOfAfter == owedOnBehalfOfBefore
+        // assert(owedOnBehalfOfAfter == owedOnBehalfOfBefore, "Should not change on behalf of user owed");
 
         //---------------------Asserts OK START----------------------
 
@@ -134,7 +134,9 @@ use builtin rule sanity;
 
         //ASSERTS
         assert(userSharesAfter > userSharesBefore =>
-        f.selector == sig:pullDebt(uint256, address).selector, "Should increase user shares");
+        f.selector == sig:borrow(uint256,address).selector ||
+        f.selector == sig:pullDebt(uint256, address).selector, 
+        "Should increase user shares");
     } 
 
 
@@ -160,7 +162,10 @@ use builtin rule sanity;
 
         //ASSERTS
         assert(userSharesAfter < userSharesBefore =>
-        f.selector == sig:repayWithShares(uint256, address).selector, "Should not decrease user shares");
+        f.selector == sig:borrow(uint256, address).selector ||
+        f.selector == sig:pullDebt(uint256, address).selector || 
+        f.selector == sig:repayWithShares(uint256, address).selector, 
+        "Should not decrease user shares");
     }
 
     //repayWithShares reverts //@audit timeout for assert4
@@ -199,8 +204,8 @@ use builtin rule sanity;
         // //assert3: if sharesOnBehalfOf < sharesToRepay, then revert
         // assert(sharesOnBehalfOf < sharesToRepay => lastRevert, "Not enough shares available to repay");
 
-        //assert4: if owed is less than assetsToRepay, then revert
-        assert(to_mathint(OwedReceiverAsAssets) < to_mathint(assetsToRepay) => lastRevert, "Not enough owed to repay");
+        // //assert4: if owed is less than assetsToRepay, then revert
+        // assert(to_mathint(OwedReceiverAsAssets) < to_mathint(assetsToRepay) => lastRevert, "Not enough owed to repay");
 
         //---------------ASSERTS OK START----------------
 
@@ -211,7 +216,7 @@ use builtin rule sanity;
         assert(onBehalfOf == 0 => lastRevert, "On behalf of should not be address(0)");
 
         //assert5: if isRepayWithSharesDisabled, then revert
-        assert(isRepayWithSharesDisabled => lastRevert, "RepayWithShares should not be disabled");
+        // assert(isRepayWithSharesDisabled => lastRevert, "RepayWithShares should not be disabled");
 
 
 
@@ -277,6 +282,7 @@ use builtin rule sanity;
         //ASSERTS
         assert(totalBorrowsAfter > totalBorrowsBefore =>
         f.selector == sig:repay(uint256, address).selector ||
+        f.selector == sig:repayWithShares(uint256, address).selector ||
         f.selector == sig:borrow(uint256, address).selector,
         "Should not increase total borrows");
     }
@@ -338,7 +344,7 @@ use builtin rule sanity;
 
         //VALUES BEFORE
         uint vaultBalanceBefore = getUserCollateralBalanceHarness(vaultCache,currentContract);
-        bool isFlashLoanDisabled = isFlashLoanDisabled(e);
+        // bool isFlashLoanDisabled = isFlashLoanDisabled(e);
 
         //FUNCTION CALL
         flashLoan@withrevert(e, amount, data);

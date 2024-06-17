@@ -30,6 +30,63 @@ use builtin rule sanity;
 
 //------------------------------- RULES OK START ------------------------------------
 
+    //only change allowance
+    rule onlyChangeAllowance(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    } {
+        //FUNCTION PARAMETER
+        address onBehalfOf = actualCaller(e);
+        address user1;
+        address user2;
+        require(onBehalfOf != user1 && onBehalfOf != user2);
+        //VALUES BEFORE
+        uint256 allowanceBefore = shareAllowanceGhost[user1][user2];
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        uint256 allowanceAfter = shareAllowanceGhost[user1][user2];
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(allowanceBefore != allowanceAfter =>
+        f.selector == sig:transferFrom(address,address,uint256).selector ||
+        f.selector == sig:transferFromMax(address,address).selector ||
+        f.selector == sig:approve(address,uint256).selector,
+        "This function should not be able to change the user shares");
+    }
+
+   //only change vault shares
+    rule onlyChangeUserShares(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    // && !VAULT_HARNESS_FUNCTIONS(f)
+    } {
+        //FUNCTION PARAMETER
+        address user;
+        //VALUES BEFORE
+        Type.Shares sharesUserBefore = shareBalanceGhost[user];
+
+        //FUNCTION CALL
+        f(e, args);
+
+        //VALUES AFTER
+        Type.Shares sharesUserAfter = shareBalanceGhost[user];
+
+        //ASSERTS
+        // Only spesifc functions should change the balance of the collateral
+        assert(sharesUserBefore != sharesUserAfter =>
+        f.selector == sig:deposit(uint256,address).selector ||
+        f.selector == sig:mint(uint256,address).selector ||
+        f.selector == sig:redeem(uint256,address,address).selector ||
+        f.selector == sig:skim(uint256,address).selector ||
+        f.selector == sig:transfer(address,uint256).selector ||
+        f.selector == sig:transferFrom(address,address,uint256).selector ||
+        f.selector == sig:transferFromMax(address,address).selector ||
+        f.selector == sig:withdraw(uint256,address,address).selector,
+        "This function should not be able to change the user shares");
+    }
+
+
+
     //only change snapshot //@audit snapshot is not changed at all (tested by removing the code) but passes
     rule onlyChangeSnapshot(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
     } {

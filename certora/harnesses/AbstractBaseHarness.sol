@@ -141,9 +141,9 @@ abstract contract AbstractBaseHarness is Base {
         return isOperationDisabledExt(OP_LIQUIDATE);
     }
 
-    function isFlashLoanDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_FLASHLOAN);
-    }
+    // function isFlashLoanDisabled() public returns (bool) {
+    //     return isOperationDisabledExt(OP_FLASHLOAN);
+    // }
 
 
 
