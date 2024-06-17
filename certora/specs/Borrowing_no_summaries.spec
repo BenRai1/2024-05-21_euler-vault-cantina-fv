@@ -344,7 +344,10 @@ use builtin rule sanity;
 
         //VALUES BEFORE
         uint vaultBalanceBefore = getUserCollateralBalanceHarness(vaultCache,currentContract);
-        // bool isFlashLoanDisabled = isFlashLoanDisabled(e);
+        bool opSet = isFlashLoanSet(e, vaultCache.hookedOps);
+        address hookTarget = getHookTargetHarness();
+
+
 
         //FUNCTION CALL
         flashLoan@withrevert(e, amount, data);
@@ -360,8 +363,9 @@ use builtin rule sanity;
         //assert2: vaultBalanceAfter < vaultBalanceBefore, then revert
         assert(vaultBalanceAfter < vaultBalanceBefore => lastRevert, "Vault balance should not decrease");
 
-        //assert3: if isFlashLoanDisabled, then revert
-        // assert(isFlashLoanDisabled => lastRevert, "FlashLoan should not be disabled"); 
+        //assert3: if opSet && hookTarget == 0, revert
+        // assert(opSet && hookTarget == 0 => lastRevert, "opSet and hookTarget is 0 => Function should revert");
+
     }
 
     //only changes total borrows

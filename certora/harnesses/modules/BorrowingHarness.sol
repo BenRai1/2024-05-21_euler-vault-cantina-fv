@@ -167,6 +167,11 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
         return Shares.wrap(0);
     }
 
+    function InvokeHookHarness() external {
+        address hookTarget = vaultStorage.hookTarget;
+        assert(hookTarget != address(0));
+    }
+
     
 
 

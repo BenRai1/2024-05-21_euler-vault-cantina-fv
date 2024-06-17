@@ -80,69 +80,68 @@ abstract contract AbstractBaseHarness is Base {
     //--------------------------------------------------------------------------
     // Operation disable checks
     //--------------------------------------------------------------------------
-    function isOperationDisabledExt(uint32 operation) public returns (bool) {
-        VaultCache memory vaultCache = updateVault();
-        return isOperationDisabled(vaultCache.hookedOps, operation);
+    function isOperationSetExt(Flags hookedOps, uint32 operation) public returns (bool) {
+        return hookedOps.isSet(operation);
     }
 
-    function isDepositDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_DEPOSIT);
+    function isDepositSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_DEPOSIT);
     }
 
-    function isMintDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_MINT);
+    function isMintSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_MINT);
     }
 
-    function isWithdrawDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_WITHDRAW);
+    function isWithdrawSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_WITHDRAW);
     }
 
-    function isRedeemDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_REDEEM);
+    function isRedeemSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_REDEEM);
     }
 
-    function isSkimDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_SKIM);
+    function isSkimSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_SKIM);
     }
 
-    function isTransferDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_TRANSFER);
+    function isTransferSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_TRANSFER);
     }
 
-    function isRepayDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_REPAY);
+    function isRepaySet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_REPAY);
     }
 
-    function isRepayWithSharesDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_REPAY_WITH_SHARES);
+    function isRepayWithSharesSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_REPAY_WITH_SHARES);
     }
 
-    function isConvertFeesDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_CONVERT_FEES);
+    function isConvertFeesSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_CONVERT_FEES);
     }
 
-    function isTouchDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_TOUCH);
+    function isTouchSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_TOUCH);
     }
 
-    function isVaultStatusCheckDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_VAULT_STATUS_CHECK);
+    function isVaultStatusCheckSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_VAULT_STATUS_CHECK);
     }
 
-    function isBorrowDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_BORROW);
+    function isBorrowSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_BORROW);
     }
 
-    function isPullDebtDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_PULL_DEBT);
+    function isPullDebtSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_PULL_DEBT);
     }
 
-    function isLiquidateDisabled() public returns (bool) {
-        return isOperationDisabledExt(OP_LIQUIDATE);
+    function isLiquidateSet(Flags hookedOps) public returns (bool) {
+        return isOperationSetExt(hookedOps, OP_LIQUIDATE);
     }
 
-    // function isFlashLoanDisabled() public returns (bool) {
-    //     return isOperationDisabledExt(OP_FLASHLOAN);
+    // function isFlashLoanSet(Flags hookedOps) public returns (bool) {
+    //     return isOperationSetExt(hookedOps, OP_FLASHLOAN);
     // }
 
 

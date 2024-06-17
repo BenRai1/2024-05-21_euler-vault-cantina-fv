@@ -45,21 +45,21 @@ methods {
 definition BASE_HARNESS_FUNCTIONS(method f) returns bool =
     f.selector == sig:getHookTargetHarness().selector ||
     f.selector == sig:useViewCallerHarness().selector ||
-    f.selector == sig:isDepositDisabled().selector ||
-    f.selector == sig:isMintDisabled().selector ||
-    f.selector == sig:isOperationDisabledExt(uint32).selector ||
-    f.selector == sig:isRedeemDisabled().selector ||
-    f.selector == sig:isSkimDisabled().selector ||
-    f.selector == sig:isWithdrawDisabled().selector ||
-    f.selector == sig:isTransferDisabled().selector ||
-    f.selector == sig:isRepayDisabled().selector ||
-    f.selector == sig:isRepayWithSharesDisabled().selector ||
-    f.selector == sig:isConvertFeesDisabled().selector ||
-    f.selector == sig:isTouchDisabled().selector ||
-    f.selector == sig:isVaultStatusCheckDisabled().selector ||
-    f.selector == sig:isBorrowDisabled().selector ||
-    f.selector == sig:isPullDebtDisabled().selector ||
-    f.selector == sig:isLiquidateDisabled().selector ||
+    f.selector == sig:isDepositSet(Type.Flags).selector ||
+    f.selector == sig:isMintSet(Type.Flags).selector ||
+    f.selector == sig:isOperationSetExt(Type.Flags, uint32).selector ||
+    f.selector == sig:isRedeemSet(Type.Flags).selector ||
+    f.selector == sig:isSkimSet(Type.Flags).selector ||
+    f.selector == sig:isWithdrawSet(Type.Flags).selector ||
+    f.selector == sig:isTransferSet(Type.Flags).selector ||
+    f.selector == sig:isRepaySet(Type.Flags).selector ||
+    f.selector == sig:isRepayWithSharesSet(Type.Flags).selector ||
+    f.selector == sig:isConvertFeesSet(Type.Flags).selector ||
+    f.selector == sig:isTouchSet(Type.Flags).selector ||
+    f.selector == sig:isVaultStatusCheckSet(Type.Flags).selector ||
+    f.selector == sig:isBorrowSet(Type.Flags).selector ||
+    f.selector == sig:isPullDebtSet(Type.Flags).selector ||
+    f.selector == sig:isLiquidateSet(Type.Flags).selector ||
     f.selector == sig:vaultCacheOracleConfigured().selector ||
     f.selector == sig:getBalanceAndForwarderExt(address).selector ||
     f.selector == sig:reentrancyLockedHarness().selector;

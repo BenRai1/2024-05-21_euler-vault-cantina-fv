@@ -1,5 +1,7 @@
 import "./abstractBase.spec";
 
+using GovernanceHarness as Governance;
+
 /////////////////// METHODS START ///////////////////////
     methods {
     //Harness functions
@@ -48,6 +50,7 @@ import "./abstractBase.spec";
 
     function _.isHookTarget() external => NONDET;
     //Function summary
+    // function Base.invokeHookTarget(address caller) internal with (env e)=> InvokeHookHarness(e);
 
 
     function Cache.updateVault() internal returns (GovernanceHarness.VaultCache memory) with(env e) => CVLUpdateVault();
@@ -94,12 +97,21 @@ import "./abstractBase.spec";
         f.selector == sig:getLTVConfig(address).selector ||
         f.selector == sig:isAccountStatusCheckDeferredExt(address).selector ||
         f.selector == sig:isCollateralEnabledExt(address,address).selector ||
-        f.selector == sig:isDepositDisabled().selector ||
-        f.selector == sig:isMintDisabled().selector ||
-        f.selector == sig:isOperationDisabledExt(uint32).selector ||
-        f.selector == sig:isRedeemDisabled().selector ||
-        f.selector == sig:isSkimDisabled().selector ||
-        f.selector == sig:isWithdrawDisabled().selector ||
+        f.selector == sig:isDepositSet(Type.Flags).selector ||
+        f.selector == sig:isMintSet(Type.Flags).selector ||
+        f.selector == sig:isOperationSetExt(Type.Flags, uint32).selector ||
+        f.selector == sig:isRedeemSet(Type.Flags).selector ||
+        f.selector == sig:isSkimSet(Type.Flags).selector ||
+        f.selector == sig:isWithdrawSet(Type.Flags).selector ||
+        f.selector == sig:isTransferSet(Type.Flags).selector ||
+        f.selector == sig:isRepaySet(Type.Flags).selector ||
+        f.selector == sig:isRepayWithSharesSet(Type.Flags).selector ||
+        f.selector == sig:isConvertFeesSet(Type.Flags).selector ||
+        f.selector == sig:isTouchSet(Type.Flags).selector ||
+        f.selector == sig:isVaultStatusCheckSet(Type.Flags).selector ||
+        f.selector == sig:isBorrowSet(Type.Flags).selector ||
+        f.selector == sig:isPullDebtSet(Type.Flags).selector ||
+        f.selector == sig:isLiquidateSet(Type.Flags).selector ||
         f.selector == sig:calculateLiquidationLTVHarness(GovernanceHarness.LTVConfig,bool).selector ||
         f.selector == sig:calculateProtocolFeeHarness(address,uint16).selector ||
         f.selector == sig:calculateSharesToMoveHarness(GovernanceHarness.Shares,uint16).selector ||
@@ -118,12 +130,21 @@ import "./abstractBase.spec";
     f.selector == sig:reentrancyLockedHarness().selector;
 
     definition DISABLED_FUNCTIONS(method f) returns bool =
-        f.selector == sig:isDepositDisabled().selector ||
-        f.selector == sig:isMintDisabled().selector ||
-        f.selector == sig:isOperationDisabledExt(uint32).selector ||
-        f.selector == sig:isRedeemDisabled().selector ||
-        f.selector == sig:isSkimDisabled().selector ||
-    f.selector == sig:isWithdrawDisabled().selector;
+        f.selector == sig:isDepositSet(Type.Flags).selector ||
+        f.selector == sig:isMintSet(Type.Flags).selector ||
+        f.selector == sig:isOperationSetExt(Type.Flags, uint32).selector ||
+        f.selector == sig:isRedeemSet(Type.Flags).selector ||
+        f.selector == sig:isSkimSet(Type.Flags).selector ||
+        f.selector == sig:isWithdrawSet(Type.Flags).selector ||
+        f.selector == sig:isTransferSet(Type.Flags).selector ||
+        f.selector == sig:isRepaySet(Type.Flags).selector ||
+        f.selector == sig:isRepayWithSharesSet(Type.Flags).selector ||
+        f.selector == sig:isConvertFeesSet(Type.Flags).selector ||
+        f.selector == sig:isTouchSet(Type.Flags).selector ||
+        f.selector == sig:isVaultStatusCheckSet(Type.Flags).selector ||
+        f.selector == sig:isBorrowSet(Type.Flags).selector ||
+        f.selector == sig:isPullDebtSet(Type.Flags).selector ||
+        f.selector == sig:isLiquidateSet(Type.Flags).selector;
 
 
 
@@ -134,6 +155,7 @@ import "./abstractBase.spec";
 
 ////////////////// FUNCTIONS START //////////////////////
 
+  
 
     function CVLUpdateVault() returns GovernanceHarness.VaultCache {
         GovernanceHarness.VaultCache vaultCache = getCurrentVaultCacheHarness();

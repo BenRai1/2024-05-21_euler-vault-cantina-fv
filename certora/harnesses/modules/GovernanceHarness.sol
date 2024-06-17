@@ -218,6 +218,11 @@ contract GovernanceHarness is Governance, AbstractBaseHarness {
         // because ramping happens only when liquidation LTV decreases, it's safe to down-cast the new value
         return ConfigAmount.wrap(uint16(currentLiquidationLTV));
     }
+
+    function InvokeHookHarness() external {
+        address hookTarget = vaultStorage.hookTarget;
+        assert(hookTarget != address(0));
+    }
     
 
 

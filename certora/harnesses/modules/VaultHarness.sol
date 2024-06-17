@@ -113,4 +113,9 @@ contract VaultHarness is VaultModule, TokenModule, AbstractBaseHarness {
         (IERC20 _asset,,) = ProxyUtils.metadata();
         return address(_asset);
     }
+
+    function InvokeHookHarness() external {
+        address hookTarget = vaultStorage.hookTarget;
+        assert(hookTarget != address(0));
+    }
 }

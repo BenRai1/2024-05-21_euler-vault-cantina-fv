@@ -2,7 +2,6 @@ import "./Base.spec";
 import "./Base/governance_no_summaries.spec";
 using MockHookTarget as HookTarget;
 using ProtocolConfig as ProtocolConfig;
-using GovernanceHarness as Governance;
 
 // used to test running time
 use builtin rule sanity;
@@ -21,7 +20,7 @@ use rule privilegedOperation;
         (protocolReceiver, protocolFee) = ProtocolConfig.protocolFeeConfig(e,currentContract);
         //Balances
         GovernanceHarness.PackedUserSlot userDataBefore = getUserStorageDataHarness(user);
-        bool opSet = isConvertFeesDisabled(e);
+        bool opSet = isConvertFeesSet(e, vaultCacheBefore.hookedOps);
         address hookTarget = getHookTargetHarness();
 
         //FUNCTION CALL
@@ -48,6 +47,6 @@ use rule privilegedOperation;
         assert(vaultCacheBefore.accumulatedFees != 0 && protocolReceiver == 0 && protocolFee != 0 => reverted, "Protocol receiver is 0");
 
         // //assert4: if opSet && hookTarget == 0, revert
-        // assert(opSet && hookTarget == 0 => reverted, "HookOps is set and hookTarget is 0");
+        // assert(opSet && hookTarget == 0 => reverted, "opSet and hookTarget is 0 => Function should revert");
 
     }
