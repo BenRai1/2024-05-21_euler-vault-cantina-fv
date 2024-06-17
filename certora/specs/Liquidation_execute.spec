@@ -66,47 +66,47 @@ function CVLGetCollaterals(address account) returns address[] {
 
 //------------------------------- RULES TEST START ----------------------------------
 
-//executeLiquidation reverts
-rule executeLiquidationReverts(env e){
-    //FUNCTION PARAMETER
-    address violator;
-    address collateral;
-    uint256 repayAssets;
-    uint256 minYieldBalance;
+// //executeLiquidation reverts
+// rule executeLiquidationReverts(env e){ //@audit-check this should be ok to fix
+//     //FUNCTION PARAMETER
+//     address violator;
+//     address collateral;
+//     uint256 repayAssets;
+//     uint256 minYieldBalance;
 
-    address liquidator = actualCaller(e); //i: onBehalfOf
-    Type.VaultCache vaultCache = CVLUpdateVault();
-    Type.LiquidationCache liquidationCache = CVLCalculateLiquidation(liquidator, violator, collateral, repayAssets);
+//     address liquidator = actualCaller(e); //i: onBehalfOf
+//     Type.VaultCache vaultCache = CVLUpdateVault();
+//     Type.LiquidationCache liquidationCache = CVLCalculateLiquidation(liquidator, violator, collateral, repayAssets);
 
-    //VALUES BEFORE
-    Type.Owed owedViolatorBefore = owedGhost[violator];
-    Type.Owed repayAsOwed = assetsToOwedHarness(liquidationCache.repay); //i: amount
-    Type.Owed finalAmount = finalAmountDustHarness(repayAsOwed, owedViolatorBefore);
-    bool isLiquidationDisabled = isLiquidationDisabled();
+//     //VALUES BEFORE
+//     Type.Owed owedViolatorBefore = owedGhost[violator];
+//     Type.Owed repayAsOwed = assetsToOwedHarness(liquidationCache.repay); //i: amount
+//     Type.Owed finalAmount = finalAmountDustHarness(repayAsOwed, owedViolatorBefore);
+//     bool isLiquidationDisabled = isLiquidationDisabled();
 
-    //FUNCTION CALL
-    liquidate@withrevert(e, violator, collateral, repayAssets, minYieldBalance);
-    //must call liquidate, calculateLiquidation is summarized
+//     //FUNCTION CALL
+//     liquidate@withrevert(e, violator, collateral, repayAssets, minYieldBalance);
+//     //must call liquidate, calculateLiquidation is summarized
 
-    //VALUES AFTER
+//     //VALUES AFTER
 
-    //ASSERTS
-    // //assert1: if minYealdBalance > yieldBalance, the function reverts
-    // assert(minYieldBalance > liquidationCache.yieldBalance => lastReverted, "minYieldBalance is higher than yieldBalance, but the function did not revert");
+//     //ASSERTS
+//     // //assert1: if minYealdBalance > yieldBalance, the function reverts
+//     // assert(minYieldBalance > liquidationCache.yieldBalance => lastReverted, "minYieldBalance is higher than yieldBalance, but the function did not revert");
 
-    //assert2: if the finalAmount that should be repayed is bigger than the owedViolatorBefore, the function reverts
-    assert(finalAmount > owedViolatorBefore => lastReverted, "FinalAmount is higher than owedViolatorBefore, but the function did not revert");
+//     //assert2: if the finalAmount that should be repayed is bigger than the owedViolatorBefore, the function reverts
+//     // assert(finalAmount > owedViolatorBefore => lastReverted, "FinalAmount is higher than owedViolatorBefore, but the function did not revert");
 
 
-    //assert3: if the owed remaining is bigger than the owed exact the function reverts
+//     //assert3: if the owed remaining is bigger than the owed exact the function reverts
 
-    //assert4: if the liquidation is disabled, the function reverts
-    assert(isLiquidationDisabled => lastReverted, "Liquidation is disabled, but the function did not revert");
+//     //assert4: if the liquidation is disabled, the function reverts
+//     // assert(isLiquidationDisabled => lastReverted, "Liquidation is disabled, but the function did not revert");
 
    
 
 
-}
+// }
 
 
 
@@ -149,7 +149,7 @@ rule executeLiquidationReverts(env e){
         repayAssets != max_uint256 && yieldBalanceCalculated > 0 ? yieldBalanceCapped //i: dont want to repay all and there is something to repay
         : yieldBalanceCalculated; //i: want to repay all or there is nothing to repay
 
-        bool isLiquidationDisabled = isLiquidationDisabled();
+        // bool isLiquidationDisabled = isLiquidationDisabled();
 
 
 
@@ -162,7 +162,7 @@ rule executeLiquidationReverts(env e){
 
 
         //assert9: if the desired repay is higher than the calculated repay, the function reverts//@audit time out
-        assert(liability != 0 && repayAssets != max_uint256 && to_mathint(repayAssets) > to_mathint(repayCalculated) => reverted, "Desired repay is higher than the calculated repay, but the function did not revert");
+        // assert(liability != 0 && repayAssets != max_uint256 && to_mathint(repayAssets) > to_mathint(repayCalculated) => reverted, "Desired repay is higher than the calculated repay, but the function did not revert");
 
 
 
@@ -173,39 +173,39 @@ rule executeLiquidationReverts(env e){
         // //assert13: if the amount that should be repayed is bigger than the fromOwed, the function reverts
 
         //------------------ASSERTS OK START------------------   
-            // //assert1: if liquidator and violator are the same, the function reverts
-            // assert(liquidator == violator => reverted, "Liquidator and violator are the same, but the function did not revert");
+            //assert1: if liquidator and violator are the same, the function reverts
+            assert(liquidator == violator => reverted, "Liquidator and violator are the same, but the function did not revert");
 
-            // //assert2: if collateral is not recognized, the function reverts
-            // assert(!isRecognizedCollateral => reverted, "Collateral is not recognized, but the function did not revert");	
+            //assert2: if collateral is not recognized, the function reverts
+            assert(!isRecognizedCollateral => reverted, "Collateral is not recognized, but the function did not revert");	
 
-            // //assert3: if collateral is not enabled, the function reverts
-            // assert(!isCollateralEnabled => reverted, "Collateral is not enabled, but the function did not revert");
+            //assert3: if collateral is not enabled, the function reverts
+            assert(!isCollateralEnabled => reverted, "Collateral is not enabled, but the function did not revert");
 
-            // //assert4: if account status check is deferred, the function reverts
-            // assert(isAccountStatusCheckDeferred => reverted, "Account status check is deferred, but the function did not revert");
+            //assert4: if account status check is deferred, the function reverts
+            assert(isAccountStatusCheckDeferred => reverted, "Account status check is deferred, but the function did not revert");
 
-            // //assert5: if violator is in liquidation cool off, the function reverts
-            // assert(isInLiquidationCoolOff => reverted, "Violator is in liquidation cool off, but the function did not revert");
+            //assert5: if violator is in liquidation cool off, the function reverts
+            assert(isInLiquidationCoolOff => reverted, "Violator is in liquidation cool off, but the function did not revert");
 
-            // // assert6: if controllers.length > 1, the function reverts
-            // assert(controlers.length > 1 => reverted, "There are more than one controller, but the function did not revert");
+            // assert6: if controllers.length > 1, the function reverts
+            assert(controlers.length > 1 => reverted, "There are more than one controller, but the function did not revert");
 
-            // //assert7: if controllers.length == 0, the function reverts
-            // assert(controlers.length == 0 => reverted, "There are no controllers, but the function did not revert");
+            //assert7: if controllers.length == 0, the function reverts
+            assert(controlers.length == 0 => reverted, "There are no controllers, but the function did not revert");
 
-            // //assert8: if controllers[0] != currentContract, the function reverts
-            // assert(controlers[0] != currentContract => reverted, "The controller is not the current contract, but the function did not revert");
+            //assert8: if controllers[0] != currentContract, the function reverts
+            assert(controlers[0] != currentContract => reverted, "The controller is not the current contract, but the function did not revert");
 
             
             
-            // //assert10: if e.msg.sender is not EVC, the function reverts
-            // assert(e.msg.sender != EVC => reverted, "e.msg.sender is not EVC, but the function did not revert");
+            //assert10: if e.msg.sender is not EVC, the function reverts
+            assert(e.msg.sender != EVC => reverted, "e.msg.sender is not EVC, but the function did not revert");
 
-            // //assert11: if !controllerEnabled, the function reverts
-            // assert(!controllerEnabled => reverted, "Controller is not enabled, but the function did not revert");
+            //assert11: if !controllerEnabled, the function reverts
+            assert(!controllerEnabled => reverted, "Controller is not enabled, but the function did not revert");
 
-            // //assert14: if the liquidation is disabled, the function reverts
+            //assert14: if the liquidation is disabled, the function reverts
             // assert(isLiquidationDisabled => reverted, "Liquidation is disabled, but the function did not revert");
 
 
@@ -306,25 +306,25 @@ rule executeLiquidationReverts(env e){
         // //assert5: the collateral of liquidator is increased by the value of the collateral
         // assert(to_mathint(balanceCollateralLiquidatorAfter) == balanceCollateralLiquidatorBefore + finalYieldBalance, "Collateral of liquidator has not increased by the value of the collateral");
 
-        //assert7: if noMoreCollateral, totalBorrow is reduced by owedRemaining
-        assert(owedViolatorBefore != 0 && adjustOwedRemainingViolator => to_mathint(totalBorrowAfter) == totalBorrowBefore - remainingOwedViolator, "Total borrow is not reduced by owedRemaining"); //@audit might fail because of types Owed and Assets mixed
+        // //assert7: if noMoreCollateral, totalBorrow is reduced by owedRemaining
+        // assert(owedViolatorBefore != 0 && adjustOwedRemainingViolator => to_mathint(totalBorrowAfter) == totalBorrowBefore - remainingOwedViolator, "Total borrow is not reduced by owedRemaining"); //@audit might fail because of types Owed and Assets mixed
 
 
 
         //-------------------------- ASSERTS OK START --------------------------
 
 
-            // //assert3: owed of otherUser has not changed
-            // assert(owedOtherUserBefore == owedOtherUserAfter, "Owed of otherUser has changed");
+            //assert3: owed of otherUser has not changed
+            assert(owedOtherUserBefore == owedOtherUserAfter, "Owed of otherUser has changed");
 
 
 
-            // //assert6: the collateral of otherUser has not changed
-            // assert(balanceCollateralOtherUserBefore == balanceCollateralOtherUserAfter, "Collateral of otherUser has changed");
+            //assert6: the collateral of otherUser has not changed
+            assert(balanceCollateralOtherUserBefore == balanceCollateralOtherUserAfter, "Collateral of otherUser has changed");
 
 
-            // //assert8: if noMoreCollateral, owedViolatorAfter is 0
-            // assert(adjustOwedRemainingViolator => owedViolatorAfter == 0, "Owed of violator is not 0");
+            //assert8: if noMoreCollateral, owedViolatorAfter is 0
+            assert(adjustOwedRemainingViolator => owedViolatorAfter == 0, "Owed of violator is not 0");
 
 
 

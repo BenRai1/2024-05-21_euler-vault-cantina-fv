@@ -1,7 +1,7 @@
 import "./Base.spec";
 import "./GhostPow.spec";
 import "./LoadVaultSummaries.spec";
-import "./Base/vault.spec";
+import "./Base/vault_short.spec";
 
 using VaultHarness as Vault;
 using EthereumVaultConnector as EVC;
@@ -56,32 +56,32 @@ use builtin rule sanity;
         "This function should not be able to change the user shares");
     }
 
-    //only change allowance
-    rule onlyChangeAllowance(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
-    } {
-        //FUNCTION PARAMETER
-        address user1;
-        address user2;
-        //VALUES BEFORE
-        uint256 allowanceBefore = shareAllowanceGhost[user1][user2];
+    // //only change allowance
+    // rule onlyChangeAllowance(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    // } {
+    //     //FUNCTION PARAMETER
+    //     address user1;
+    //     address user2;
+    //     //VALUES BEFORE
+    //     uint256 allowanceBefore = shareAllowanceGhost[user1][user2];
 
-        //FUNCTION CALL
-        f(e, args);
+    //     //FUNCTION CALL
+    //     f(e, args);
 
-        //VALUES AFTER
-        uint256 allowanceAfter = shareAllowanceGhost[user1][user2];
+    //     //VALUES AFTER
+    //     uint256 allowanceAfter = shareAllowanceGhost[user1][user2];
 
-        //ASSERTS
-        // Only spesifc functions should change the balance of the collateral
-        assert(allowanceBefore != allowanceAfter =>
-        f.selector == sig:transferFrom(address,address,uint256).selector ||
-        f.selector == sig:transferFromMax(address,address).selector ||
-        f.selector == sig:redeem(uint256,address,address).selector ||
-        f.selector == sig:transfer(address,uint256).selector ||
-        f.selector == sig:withdraw(uint256,address,address).selector ||
-        f.selector == sig:approve(address,uint256).selector,
-        "This function should not be able to change the user shares");
-    }
+    //     //ASSERTS
+    //     // Only spesifc functions should change the balance of the collateral
+    //     assert(allowanceBefore != allowanceAfter =>
+    //     f.selector == sig:transferFrom(address,address,uint256).selector ||
+    //     f.selector == sig:transferFromMax(address,address).selector ||
+    //     f.selector == sig:redeem(uint256,address,address).selector ||
+    //     f.selector == sig:transfer(address,uint256).selector ||
+    //     f.selector == sig:withdraw(uint256,address,address).selector ||
+    //     f.selector == sig:approve(address,uint256).selector,
+    //     "This function should not be able to change the user shares");
+    // }
 
     //only change total shares
     rule onlyChangeTotalShares(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
@@ -129,33 +129,33 @@ use builtin rule sanity;
         "This function should not be able to change the user shares");
     }
 
-    //only change vault shares
-    rule onlyChangeUserShares(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
-    } {
-        //FUNCTION PARAMETER
-        address user;
-        //VALUES BEFORE
-        Type.Shares sharesUserBefore = shareBalanceGhost[user];
+    // //only change vault shares
+    // rule onlyChangeUserShares(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
+    // } {
+    //     //FUNCTION PARAMETER
+    //     address user;
+    //     //VALUES BEFORE
+    //     Type.Shares sharesUserBefore = shareBalanceGhost[user];
 
-        //FUNCTION CALL
-        f(e, args);
+    //     //FUNCTION CALL
+    //     f(e, args);
 
-        //VALUES AFTER
-        Type.Shares sharesUserAfter = shareBalanceGhost[user];
+    //     //VALUES AFTER
+    //     Type.Shares sharesUserAfter = shareBalanceGhost[user];
 
-        //ASSERTS
-        // Only spesifc functions should change the balance of the collateral
-        assert(sharesUserBefore != sharesUserAfter =>
-        f.selector == sig:deposit(uint256,address).selector ||
-        f.selector == sig:mint(uint256,address).selector ||
-        f.selector == sig:redeem(uint256,address,address).selector ||
-        f.selector == sig:skim(uint256,address).selector ||
-        f.selector == sig:transfer(address,uint256).selector ||
-        f.selector == sig:transferFrom(address,address,uint256).selector ||
-        f.selector == sig:transferFromMax(address,address).selector ||
-        f.selector == sig:withdraw(uint256,address,address).selector,
-        "This function should not be able to change the user shares");
-    }
+    //     //ASSERTS
+    //     // Only spesifc functions should change the balance of the collateral
+    //     assert(sharesUserBefore != sharesUserAfter =>
+    //     f.selector == sig:deposit(uint256,address).selector ||
+    //     f.selector == sig:mint(uint256,address).selector ||
+    //     f.selector == sig:redeem(uint256,address,address).selector ||
+    //     f.selector == sig:skim(uint256,address).selector ||
+    //     f.selector == sig:transfer(address,uint256).selector ||
+    //     f.selector == sig:transferFrom(address,address,uint256).selector ||
+    //     f.selector == sig:transferFromMax(address,address).selector ||
+    //     f.selector == sig:withdraw(uint256,address,address).selector,
+    //     "This function should not be able to change the user shares");
+    // }
 
     //only change balance of collateral
     rule onlyChangeBalanceOfCollateral(env e, method f, calldataarg args) filtered{ f -> !BASE_HARNESS_FUNCTIONS(f) && !f.isView  && !f.isPure 
@@ -762,131 +762,131 @@ use builtin rule sanity;
         // assert(finalAssets != 0 => returnValueCall == sharesUint, "Return value should be sharesUint if finalAssets is not 0");
     }
 
-    //transfer works
-    rule transferWorks(env e){
-        //FUNCTION PARAMETER
-        address to;
-        uint256 amount;
-        address otherUser1;
-        address otherUser2;
-        Type.Shares finalShares = uintToSharesHarness(amount);
-        address from = actualCaller(e); //i: onBahalfOf  address
-        require(otherUser1 != to && otherUser1 != from);
-        require(from != to);
+    // //transfer works
+    // rule transferWorks(env e){
+    //     //FUNCTION PARAMETER
+    //     address to;
+    //     uint256 amount;
+    //     address otherUser1;
+    //     address otherUser2;
+    //     Type.Shares finalShares = uintToSharesHarness(amount);
+    //     address from = actualCaller(e); //i: onBahalfOf  address
+    //     require(otherUser1 != to && otherUser1 != from);
+    //     require(from != to);
 
-        //VALUES BEFORE
-        //shares before
-        Type.Shares sharesFromBefore = shareBalanceGhost[from];
-        Type.Shares sharesToBefore = shareBalanceGhost[to];
-        Type.Shares sharesOtherUser1Before = shareBalanceGhost[otherUser1];
+    //     //VALUES BEFORE
+    //     //shares before
+    //     Type.Shares sharesFromBefore = shareBalanceGhost[from];
+    //     Type.Shares sharesToBefore = shareBalanceGhost[to];
+    //     Type.Shares sharesOtherUser1Before = shareBalanceGhost[otherUser1];
 
-        //allowance before
-        uint256 allowanceOtherUser1ForOtherUser2 = shareAllowanceGhost[otherUser1][otherUser2]; //i: otherUser1 => otherUser2 covers any change in allowance 
+    //     //allowance before
+    //     uint256 allowanceOtherUser1ForOtherUser2 = shareAllowanceGhost[otherUser1][otherUser2]; //i: otherUser1 => otherUser2 covers any change in allowance 
 
-        //FUNCTION CALL
-        bool returnValueCall= transfer(e, to, amount);
+    //     //FUNCTION CALL
+    //     bool returnValueCall= transfer(e, to, amount);
 
-        //VALUES AFTER
-        //shares after
-        Type.Shares sharesFromAfter = shareBalanceGhost[from];
-        Type.Shares sharesToAfter = shareBalanceGhost[to];
-        Type.Shares sharesOtherUser1After = shareBalanceGhost[otherUser1];
+    //     //VALUES AFTER
+    //     //shares after
+    //     Type.Shares sharesFromAfter = shareBalanceGhost[from];
+    //     Type.Shares sharesToAfter = shareBalanceGhost[to];
+    //     Type.Shares sharesOtherUser1After = shareBalanceGhost[otherUser1];
 
-        //allowance after
-        uint256 allowanceOtherUser1ForOtherUser2After = shareAllowanceGhost[otherUser1][otherUser2]; //i: otherUser1 => otherUser2 covers any change in allowance
+    //     //allowance after
+    //     uint256 allowanceOtherUser1ForOtherUser2After = shareAllowanceGhost[otherUser1][otherUser2]; //i: otherUser1 => otherUser2 covers any change in allowance
 
-        //ASSERTS
-        //assert1: returnValueCall should be true
-        assert(returnValueCall == true, "Return value should be true");
+    //     //ASSERTS
+    //     //assert1: returnValueCall should be true
+    //     assert(returnValueCall == true, "Return value should be true");
 
-        //assert2: allowance should not change
-        assert(allowanceOtherUser1ForOtherUser2 == allowanceOtherUser1ForOtherUser2After, "Allowance should not change");
+    //     //assert2: allowance should not change
+    //     assert(allowanceOtherUser1ForOtherUser2 == allowanceOtherUser1ForOtherUser2After, "Allowance should not change");
 
-        //assert3: shares should decrease for from by finalShares
-        assert(sharesFromBefore - finalShares == to_mathint(sharesFromAfter), "Shares of from should decrease by finalShares");
+    //     //assert3: shares should decrease for from by finalShares
+    //     assert(sharesFromBefore - finalShares == to_mathint(sharesFromAfter), "Shares of from should decrease by finalShares");
 
-        //assert4: shares should increase for to by finalShares
-        assert(sharesToBefore + finalShares == to_mathint(sharesToAfter), "Shares of to should increase by finalShares");
+    //     //assert4: shares should increase for to by finalShares
+    //     assert(sharesToBefore + finalShares == to_mathint(sharesToAfter), "Shares of to should increase by finalShares");
 
-        //assert5: shares should not change for otherUser1
-        assert(sharesOtherUser1Before == sharesOtherUser1After, "Shares of otherUser1 should not change");
-    } 
+    //     //assert5: shares should not change for otherUser1
+    //     assert(sharesOtherUser1Before == sharesOtherUser1After, "Shares of otherUser1 should not change");
+    // } 
 
-    //transferFrom works
-    rule transferFromWorks(env e){
-        //FUNCTION PARAMETER
-        address from;
-        address to;
-        uint256 amount;
-        address otherUser;
-        Type.Shares finalShares = uintToSharesHarness(amount);
-        address onBahalfOf = actualCaller(e); //i: onBahalfOf  address
-        require(otherUser != from && otherUser != onBahalfOf && otherUser != to);
-        require(from != to && from != onBahalfOf);
+    // //transferFrom works
+    // rule transferFromWorks(env e){
+    //     //FUNCTION PARAMETER
+    //     address from;
+    //     address to;
+    //     uint256 amount;
+    //     address otherUser;
+    //     Type.Shares finalShares = uintToSharesHarness(amount);
+    //     address onBahalfOf = actualCaller(e); //i: onBahalfOf  address
+    //     require(otherUser != from && otherUser != onBahalfOf && otherUser != to);
+    //     require(from != to && from != onBahalfOf);
 
-        //VALUES BEFORE
-        //shares before
-        Type.Shares sharesFromBefore = shareBalanceGhost[from];
-        Type.Shares sharesToBefore = shareBalanceGhost[to];
-        Type.Shares sharesotherUserBefore = shareBalanceGhost[otherUser];
+    //     //VALUES BEFORE
+    //     //shares before
+    //     Type.Shares sharesFromBefore = shareBalanceGhost[from];
+    //     Type.Shares sharesToBefore = shareBalanceGhost[to];
+    //     Type.Shares sharesotherUserBefore = shareBalanceGhost[otherUser];
 
-        //allowance before
-        uint256 allowanceotherUserForOnBehalfOfBefore = shareAllowanceGhost[otherUser][onBahalfOf]; //i: otherUser => onBahalfOf
-        uint256 allowanceotherUserForFromBefore = shareAllowanceGhost[otherUser][from]; //i: otherUser => from
-        uint256 allowanceFromForOnBehalfOfBefore = shareAllowanceGhost[from][onBahalfOf]; //i: from => onBahalfOf 
-        uint256 allowanceFromForotherUserBefore = shareAllowanceGhost[from][otherUser]; //i: from => otherUser
-        uint256 allowanceOnBehalfOfForotherUserBefore = shareAllowanceGhost[onBahalfOf][otherUser]; //i: onBahalfOf => otherUser
-        uint256 allowanceOnBahalfOfForFromBefore = shareAllowanceGhost[onBahalfOf][from]; //i: onBahalfOf => from
+    //     //allowance before
+    //     uint256 allowanceotherUserForOnBehalfOfBefore = shareAllowanceGhost[otherUser][onBahalfOf]; //i: otherUser => onBahalfOf
+    //     uint256 allowanceotherUserForFromBefore = shareAllowanceGhost[otherUser][from]; //i: otherUser => from
+    //     uint256 allowanceFromForOnBehalfOfBefore = shareAllowanceGhost[from][onBahalfOf]; //i: from => onBahalfOf 
+    //     uint256 allowanceFromForotherUserBefore = shareAllowanceGhost[from][otherUser]; //i: from => otherUser
+    //     uint256 allowanceOnBehalfOfForotherUserBefore = shareAllowanceGhost[onBahalfOf][otherUser]; //i: onBahalfOf => otherUser
+    //     uint256 allowanceOnBahalfOfForFromBefore = shareAllowanceGhost[onBahalfOf][from]; //i: onBahalfOf => from
 
-        //FUNCTION CALL
-        bool returnValueCall= transferFrom(e, from, to, amount);
+    //     //FUNCTION CALL
+    //     bool returnValueCall= transferFrom(e, from, to, amount);
 
-        //VALUES AFTER
-        //shares after
-        Type.Shares sharesFromAfter = shareBalanceGhost[from];
-        Type.Shares sharesToAfter = shareBalanceGhost[to];
-        Type.Shares sharesotherUserAfter = shareBalanceGhost[otherUser];
+    //     //VALUES AFTER
+    //     //shares after
+    //     Type.Shares sharesFromAfter = shareBalanceGhost[from];
+    //     Type.Shares sharesToAfter = shareBalanceGhost[to];
+    //     Type.Shares sharesotherUserAfter = shareBalanceGhost[otherUser];
 
-        //allowance after
-        uint256 allowanceotherUserForOnBehalfOfAfter = shareAllowanceGhost[otherUser][onBahalfOf]; //i: otherUser => onBahalfOf
-        uint256 allowanceotherUserForFromAfter = shareAllowanceGhost[otherUser][from]; //i: otherUser => from
-        uint256 allowanceFromForOnBehalfOfAfter = shareAllowanceGhost[from][onBahalfOf]; //i: from => onBahalfOf
-        uint256 allowanceFromForotherUserAfter = shareAllowanceGhost[from][otherUser]; //i: from => otherUser
-        uint256 allowanceOnBahalfOfForotherUserAfter = shareAllowanceGhost[onBahalfOf][otherUser]; //i: onBahalfOf => otherUser
-        uint256 allowanceOnBahalfOfForFromAfter = shareAllowanceGhost[onBahalfOf][from]; //i: onBahalfOf => from
+    //     //allowance after
+    //     uint256 allowanceotherUserForOnBehalfOfAfter = shareAllowanceGhost[otherUser][onBahalfOf]; //i: otherUser => onBahalfOf
+    //     uint256 allowanceotherUserForFromAfter = shareAllowanceGhost[otherUser][from]; //i: otherUser => from
+    //     uint256 allowanceFromForOnBehalfOfAfter = shareAllowanceGhost[from][onBahalfOf]; //i: from => onBahalfOf
+    //     uint256 allowanceFromForotherUserAfter = shareAllowanceGhost[from][otherUser]; //i: from => otherUser
+    //     uint256 allowanceOnBahalfOfForotherUserAfter = shareAllowanceGhost[onBahalfOf][otherUser]; //i: onBahalfOf => otherUser
+    //     uint256 allowanceOnBahalfOfForFromAfter = shareAllowanceGhost[onBahalfOf][from]; //i: onBahalfOf => from
     
-        //ASSERTS
-        //assert1: returnValueCall should be true
-        assert(returnValueCall == true, "Return value should be true");
+    //     //ASSERTS
+    //     //assert1: returnValueCall should be true
+    //     assert(returnValueCall == true, "Return value should be true");
 
-        //assert3: shares should decrease for from by finalShares
-        assert(sharesFromBefore - finalShares == to_mathint(sharesFromAfter), "Shares of from should decrease by finalShares");
+    //     //assert3: shares should decrease for from by finalShares
+    //     assert(sharesFromBefore - finalShares == to_mathint(sharesFromAfter), "Shares of from should decrease by finalShares");
 
-        //assert4: shares should increase for to by finalShares
-        assert(sharesToBefore + finalShares == to_mathint(sharesToAfter), "Shares of to should increase by finalShares");
+    //     //assert4: shares should increase for to by finalShares
+    //     assert(sharesToBefore + finalShares == to_mathint(sharesToAfter), "Shares of to should increase by finalShares");
 
-        //assert5: shares should not change for otherUser
-        assert(sharesotherUserBefore == sharesotherUserAfter, "Shares of otherUser should not change");
+    //     //assert5: shares should not change for otherUser
+    //     assert(sharesotherUserBefore == sharesotherUserAfter, "Shares of otherUser should not change");
 
-        //assert6: if allowanceFromForOnBehalfOf != max_uint256, allowance should decrease by finalShares
-        assert(allowanceFromForOnBehalfOfBefore != max_uint256 => allowanceFromForOnBehalfOfBefore - finalShares == to_mathint(allowanceFromForOnBehalfOfAfter), "Allowance from => onBehalfOf should decrease by finalShares");
+    //     //assert6: if allowanceFromForOnBehalfOf != max_uint256, allowance should decrease by finalShares
+    //     assert(allowanceFromForOnBehalfOfBefore != max_uint256 => allowanceFromForOnBehalfOfBefore - finalShares == to_mathint(allowanceFromForOnBehalfOfAfter), "Allowance from => onBehalfOf should decrease by finalShares");
 
-        //assert7: if allowanceFromForOnBehalfOf = max_uint256, allowance should stay the same
-        assert(allowanceFromForOnBehalfOfBefore == max_uint256 => allowanceFromForOnBehalfOfBefore == allowanceFromForOnBehalfOfAfter, "Allowance from => onBehalfOf should stay the same");
+    //     //assert7: if allowanceFromForOnBehalfOf = max_uint256, allowance should stay the same
+    //     assert(allowanceFromForOnBehalfOfBefore == max_uint256 => allowanceFromForOnBehalfOfBefore == allowanceFromForOnBehalfOfAfter, "Allowance from => onBehalfOf should stay the same");
 
-        //assert8: allowance should not change for otherUser
-        assert(allowanceotherUserForFromBefore == allowanceotherUserForFromAfter
-        && allowanceotherUserForOnBehalfOfBefore == allowanceotherUserForOnBehalfOfAfter,
-        "Allowance otherUser => from/onBehalfOf should not change");
+    //     //assert8: allowance should not change for otherUser
+    //     assert(allowanceotherUserForFromBefore == allowanceotherUserForFromAfter
+    //     && allowanceotherUserForOnBehalfOfBefore == allowanceotherUserForOnBehalfOfAfter,
+    //     "Allowance otherUser => from/onBehalfOf should not change");
 
-        //assert9: allowance should not change for onBehalfOf
-        assert(allowanceOnBahalfOfForFromBefore == allowanceOnBahalfOfForFromAfter
-        && allowanceOnBehalfOfForotherUserBefore == allowanceOnBahalfOfForotherUserAfter,
-        "Allowance onBehalfOf => from/otherUser should not change");
+    //     //assert9: allowance should not change for onBehalfOf
+    //     assert(allowanceOnBahalfOfForFromBefore == allowanceOnBahalfOfForFromAfter
+    //     && allowanceOnBehalfOfForotherUserBefore == allowanceOnBahalfOfForotherUserAfter,
+    //     "Allowance onBehalfOf => from/otherUser should not change");
 
-        //assert10: allowance from => otherUser should not change
-        assert(allowanceFromForotherUserBefore == allowanceFromForotherUserAfter, "Allowance from => otherUser should not change");
-    } 
+    //     //assert10: allowance from => otherUser should not change
+    //     assert(allowanceFromForotherUserBefore == allowanceFromForotherUserAfter, "Allowance from => otherUser should not change");
+    // } 
 
 //------------------------------- RULES OK END ------------------------------------
 

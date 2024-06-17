@@ -183,9 +183,9 @@ abstract contract VaultModule is IVault, AssetTransfers, BalanceUtils {
         (VaultCache memory vaultCache, address account) = initOperation(OP_SKIM, CHECKACCOUNT_NONE);
 
         Assets balance = vaultCache.asset.balanceOf(address(this)).toAssets();
-        // Assets available = balance <= vaultCache.cash ? Assets.wrap(0) : balance.subUnchecked(vaultCache.cash);
+        Assets available = balance <= vaultCache.cash ? Assets.wrap(0) : balance.subUnchecked(vaultCache.cash);
          // mutation: set available to balance
-        Assets available = balance;
+        // Assets available = balance;
 
 
         Assets assets;

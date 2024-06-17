@@ -1,121 +1,122 @@
-import "./Base/base.spec";
+import "./Benchmarking.spec";
 
-// using BaseHarness as Base; //@audit does not work for other specs because BaseHarness is not in the scene
+using DummyERC20A as ERC20a;
+using DummyERC20B as ERC20b; 
+using EthereumVaultConnector as evc;
 
-//------------------------------- RULES TEST START ----------------------------------
+methods {
+    // envfree
+    function getCollateralsExt(address account) external returns (address[] memory) envfree;
+    function isCollateralEnabledExt(address account, address market) external returns (bool) envfree;
+    function vaultIsOnlyController(address account) external returns (bool) envfree;
+    function isAccountStatusCheckDeferredExt(address account) external returns (bool) envfree;
+    function vaultIsController(address account) external returns (bool) envfree;
+    
 
-// //updateVault works
-// rule updateVaultWorks(env e) {
-//     //require
-//     require(e.block.timestamp <= max_uint48);
+    /// Summaries
+    // General
+    function _.mulDiv(uint144 a, uint256 b, uint256 c) internal => CVLMulDiv(a, b, c) expect uint144; 
 
-//     //TARGET VALUES 
-//     Type.VaultCache vaultCacheBefore = loadVaultHarness(e);
-//     address assetTarget = vaultCacheBefore.asset; 
-//     address oracleTarget = vaultCacheBefore.oracle;
-//     address unitOfAccountTarget = vaultCacheBefore.unitOfAccount;
-//     // Vault config
-//     uint256 supplyCapTarget = vaultCacheBefore.supplyCap;
-//     uint256 borrowCapTarget = vaultCacheBefore.borrowCap;
-//     Type.Flags hookedOpsTarget = vaultCacheBefore.hookedOps;
-//     Type.Flags configFlagsTarget = vaultCacheBefore.configFlags;
-//     // Runtime
-//     bool snapshotInitializedTarget = vaultCacheBefore.snapshotInitialized;
-//     // Vault data
-//     Type.Assets cashTarget = vaultCacheBefore.cash; 
-//     uint48 lastInterestAccumulatorUpdateTarget = require_uint48(e.block.timestamp);
-//     Type.Owed totalBorrowsTarget;//@audit 
-//     Type.Shares totalSharesTarget;//@audit 
-//     Type.Shares accumulatedFeesTarget;//@audit 
-//     uint256 interestAccumulatorTarget;//@audit 
+    // IPriceOracle
+    function _.getQuote(uint256 amount, address base, address quote) external => CVLGetQuote(amount, base, quote) expect (uint256);
+    function _.getQuotes(uint256 amount, address base, address quote) external => CVLGetQuotes(amount, base, quote) expect (uint256, uint256);
 
-//     //VALUES before
-//     bool dirty = to_mathint(e.block.timestamp) > to_mathint(vaultCacheBefore.lastInterestAccumulatorUpdate);
+    // ProxyUtils    
+    function ProxyUtils.metadata() internal returns (address, address, address)=> CVLProxyMetadata();
 
-//     //FUNCTIONCALL
-//     Type.VaultCache vaultCacheCall = updateVaultHarness(e);
+    /// Unresolved calls
+    function _.emitTransfer(address, address, uint256) external => NONDET;
+    // These are unresolved calls that havoc contract state.
+    // Most of these cause these havocs because of a low-level call 
+    // operation and are irrelevant for the rules.
+    function _.invokeHookTarget(address caller) internal => NONDET;
+    // another unresolved call that havocs all contracts
+    function _.requireVaultStatusCheck() external => NONDET;
+    function _.requireAccountAndVaultStatusCheck(address account) external => NONDET;
+    // trySafeTransferFrom cannot be summarized as NONDET (due to return type
+    // that includes bytes memory). So it is summarized as 
+    // DummyERC20a.transferFrom
+    function _.trySafeTransferFrom(address token, address from, address to, uint256 value) internal with (env e) => CVLTrySafeTransferFrom(e, from, to, value) expect (bool, bytes memory);
+    // safeTransferFrom is summarized as transferFrom
+    // from DummyERC20a to avoid dealing with the low-level `call`
+    function _.safeTransferFrom(address token, address from, address to, uint256 value, address permit2) internal with (env e)=> CVLTrySafeTransferFrom(e, from, to, value) expect (bool, bytes memory);
+    function _.computeInterestRate(address vault, uint256 cash, uint256 borrows) external => CVLComputeInterestRate(vault) expect (uint256);
 
-//     //VALUES AFTER
-//     Type.Owed totalBorrowsStorageAfter = Base.vaultStorage.totalBorrows; 
-//     Type.Shares totalSharesStorageAfter = Base.vaultStorage.totalShares; 
-//     Type.Shares accumulatedFeesStorageAfter = Base.vaultStorage.accumulatedFees;
-//     uint256 interestAccumulatorStorageAfter = Base.vaultStorage.interestAccumulator;
+    function _.tryBalanceTrackerHook(address account, uint256 newAccountBalance, bool forfeitRecentReward) internal => NONDET;
+    function _.balanceTrackerHook(address account, uint256 newAccountBalance, bool forfeitRecentReward) external => NONDET;
 
-//      Type.VaultCache vaultCacheAfter = loadVaultHarness(e);
+    // nondet for now, dispatch if needed
+    function _.checkVaultStatus() external => NONDET;
+    function _.checkAccountStatus(address) external => NONDET;
+    function _.checkAccountStatus(address,address[]) external => NONDET;
+    function _.computeInterestRateView(address, uint256, uint256) external => NONDET;
+}
+
+ghost CVLGetQuote(uint256, address, address) returns uint256 {
+    // The total value returned by the oracle is assumed < 2**230-1.
+    // There will be overflows without an upper bound on this number.
+    // (For example, it must be less than 2**242-1 to avoid overflow in
+    // LTVConfig.mul)
+    axiom forall uint256 x. forall address y. forall address z. 
+        CVLGetQuote(x, y, z) < 1725436586697640946858688965569256363112777243042596638790631055949823;
+}
+
+function CVLGetQuotes(uint256 amount, address base, address quote) returns (uint256, uint256) {
+    return (
+        CVLGetQuote(amount, base, quote),
+        CVLGetQuote(amount, base, quote)
+    );
+}
+
+function CVLMulDiv(uint144 a, uint256 b, uint256 c) returns uint144 {
+    mathint result = (a * b) / c; 
+    require result <= max_uint144;
+    return assert_uint144(result); 
+}
+
+ghost address oracleAddress;
+ghost address unitOfAccount;
+function CVLProxyMetadata() returns (address, address, address) {
+    return (ERC20a, oracleAddress, unitOfAccount);
+}
+
+function actualCaller(env e) returns address {
+    if(e.msg.sender == evc) {
+        address onBehalf;
+        bool unused;
+        onBehalf, unused = evc.getCurrentOnBehalfOfAccount(e, 0);
+        return onBehalf;
+    } else {
+        return e.msg.sender;
+    }
+}
+
+function actualCallerCheckController(env e) returns address { //@audit is the same as actualCaller
+    if(e.msg.sender == evc) {
+        address onBehalf;
+        bool unused;
+        // Similar to EVCAuthenticateDeferred when checkController is true.
+        onBehalf, unused = evc.getCurrentOnBehalfOfAccount(e, currentContract);
+        return onBehalf;
+    } else {
+        return e.msg.sender;
+    }
+}
+
+// Summarize trySafeTransferFrom as DummyERC20 transferFrom
+function CVLTrySafeTransferFrom(env e, address from, address to, uint256 value) returns (bool, bytes) {
+    bytes ret; // Ideally bytes("") if there is a way to do this
+    return (ERC20a.transferFrom(e, from, to, value), ret);
+}
+
+function CVLComputeInterestRate(address vault) returns uint256 {
+        return GhostCalculatedInterestRate[vault];
+}
 
 
-
-
-
-//     //ASSERTS
-//     // //assert 1: the right values are returned //@audit timeout on its own
-//     // assert(vaultCacheCall.asset == assetTarget &&
-//     // vaultCacheCall.oracle == oracleTarget &&
-//     // vaultCacheCall.unitOfAccount == unitOfAccountTarget &&
-//     // vaultCacheCall.supplyCap == supplyCapTarget &&
-//     // vaultCacheCall.borrowCap == borrowCapTarget &&
-//     // vaultCacheCall.hookedOps == hookedOpsTarget &&
-//     // vaultCacheCall.configFlags == configFlagsTarget &&
-//     // vaultCacheCall.snapshotInitialized == snapshotInitializedTarget &&
-//     // vaultCacheCall.cash == cashTarget &&
-//     // vaultCacheCall.lastInterestAccumulatorUpdate == lastInterestAccumulatorUpdateTarget
-//     // , "Returned values are not the target values");
-
-
-//     // //assert 2: if dirty, the storage variables are updated//@audit timeout on its own
-//     // assert(dirty =>
-//     // vaultCacheCall.lastInterestAccumulatorUpdate == lastInterestAccumulatorUpdateTarget &&
-//     // vaultCacheCall.accumulatedFees == accumulatedFeesStorageAfter &&
-//     // vaultCacheCall.totalShares == totalSharesStorageAfter &&
-//     // vaultCacheCall.totalBorrows == totalBorrowsStorageAfter &&
-//     // to_mathint(vaultCacheCall.interestAccumulator) == to_mathint(interestAccumulatorStorageAfter), "The storage variables were not updated");
-
-
-
-//     //-------------------ASSERTS OK START --------------------------
-
-//     //assert 3: all other variables stay the same
-//     assert(vaultCacheBefore.asset == vaultCacheAfter.asset &&
-//     vaultCacheBefore.oracle == vaultCacheAfter.oracle &&
-//     vaultCacheBefore.unitOfAccount == vaultCacheAfter.unitOfAccount &&
-//     vaultCacheBefore.supplyCap == vaultCacheAfter.supplyCap &&
-//     vaultCacheBefore.borrowCap == vaultCacheAfter.borrowCap &&
-//     vaultCacheBefore.hookedOps == vaultCacheAfter.hookedOps &&
-//     vaultCacheBefore.configFlags == vaultCacheAfter.configFlags &&
-//     vaultCacheBefore.snapshotInitialized == vaultCacheAfter.snapshotInitialized &&
-//     vaultCacheBefore.cash == vaultCacheAfter.cash, "This values should not have changed");
-
-//     //-------------------ASSERTS OK END --------------------------
-
-// }
-
-//initOperation
-//should revert when the red stuff happens
-//should check account accountToCheck
-//depending on the operation, function should check controller
-//depending on the operation, function should not check controller
-
-
-//invariants??
-
-
-//------------------------------- RULES TEST END ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-//------------------------------- RULES PROBLEMS START ----------------------------------
-
-//------------------------------- RULES OK START ------------------------------------
-
-//------------------------------- RULES OK END ------------------------------------
-
-//------------------------------- INVARIENTS OK START-------------------------------
-
-//------------------------------- INVARIENTS OK END-------------------------------
-
-//------------------------------- ISSUES OK START-------------------------------
-
-//------------------------------- ISSUES OK END-------------------------------
+ghost mapping(address => uint256) GhostCalculatedInterestRate{
+        axiom forall address a. GhostCalculatedInterestRate[a] < max_uint72;
+}
 
 
 

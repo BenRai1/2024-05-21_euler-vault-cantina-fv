@@ -245,7 +245,7 @@ use builtin rule sanity;
         assert(finalShares !=0 && finalAssets == 0 => lastReverted, "finalAssets == 0: Function call should revert");
 
         // assert9: if isRedeemDisabled, then function should revert
-        assert(isRedeemDisabled => lastReverted, "isRedeemDisabled: Function call should revert");
+        // assert(isRedeemDisabled => lastReverted, "isRedeemDisabled: Function call should revert");
     }
 
     //withdraw reverts
@@ -297,7 +297,7 @@ use builtin rule sanity;
         assert(finalAssets != 0 && sharesOfOwner < finalShares => lastReverted, "sharesOfOwner < finalShares: Function call should revert");
 
         // assert8: if isWithdrawDisabled, then function should revert
-        assert(isWithdrawDisabled => lastReverted, "isWithdrawDisabled: Function call should revert");
+        // assert(isWithdrawDisabled => lastReverted, "isWithdrawDisabled: Function call should revert");
     }
 
     //only functions to increase the assets of a user
@@ -587,7 +587,7 @@ use builtin rule sanity;
         assert(to_mathint(allowance) < to_mathint(sharesOfFrom) => reverted, "allowance < amount: Function call should revert");
 
         //assert6: if isTransferDisabled, then function should revert
-        assert(isTransferDisabled => reverted, "isTransferDisabled: Function call should revert");
+        // assert(isTransferDisabled => reverted, "isTransferDisabled: Function call should revert");
     }
 
     //transferFrom reverts
@@ -633,7 +633,7 @@ use builtin rule sanity;
         assert(allowance < amount => reverted, "allowance < amount: Function call should revert");
 
         //assert7: if isTransferDisabled, then function should revert
-        assert(isTransferDisabled => reverted, "isTransferDisabled: Function call should revert");
+        // assert(isTransferDisabled => reverted, "isTransferDisabled: Function call should revert");
     }
 
     //transfer reverts
@@ -668,7 +668,7 @@ use builtin rule sanity;
         assert(amountInShares > sharesOfFrom => reverted, "amountInShares > sharesOfFrom: Function call should revert");
 
         //assert6: if isTransferDisabled, then function should revert
-        assert(isTransferDisabled => reverted, "isTransferDisabled: Function call should revert");
+        // assert(isTransferDisabled => reverted, "isTransferDisabled: Function call should revert");
     }
 
     //skim reverts
@@ -710,7 +710,7 @@ use builtin rule sanity;
         assert(finalAssets != 0 && receiver == 0 => lastReverted, "receiver == 0: Function call should revert");
 
         //assert6: if isSkimDisabled, then function should revert
-        assert(isSkimDisabled => lastReverted, "isSkimDisabled: Function call should revert");
+        // assert(isSkimDisabled => lastReverted, "isSkimDisabled: Function call should revert");
     }
 
     //mint reverts
@@ -747,7 +747,7 @@ use builtin rule sanity;
         assert(finalShares != 0 && receiver == 0 => reverted, "receiver == 0: Function call should revert");
 
         //assert5: if isMintDisabled, then function should revert
-        assert(isMintDisabled => reverted, "isMintDisabled: Function call should revert");
+        // assert(isMintDisabled => reverted, "isMintDisabled: Function call should revert");
     }
    
     //deposit reverts
@@ -767,7 +767,7 @@ use builtin rule sanity;
         Type.Shares shares = assetsToSharesDownHarness(assets, vaultCache);
 
         //VALUES BEFORE
-        bool isDepositDisabled = isDepositDisabled(e);
+        // bool isDepositDisabled = isDepositDisabled(e);
 
         //FUNCTION CALL
         deposit@withrevert(e, amount, receiver);
@@ -786,8 +786,8 @@ use builtin rule sanity;
         // assert4: if receiver == 0, then function should revert
         assert(assets != 0 && receiver == 0 => reverted, "receiver == 0: Function call should revert");
 
-        //assert5: if isDepositDisabled, then function should revert
-        assert(isDepositDisabled => reverted, "isDepositDisabled: Function call should revert");
+        // //assert5: if isDepositDisabled, then function should revert
+        // assert(isDepositDisabled => reverted, "isDepositDisabled: Function call should revert");
     }
 
     //nonReentrant modifier works

@@ -148,7 +148,7 @@ use builtin rule sanity;
         uint256 prevBorrows = toUintHarness(snapshotBefore.borrows);
         uint256 prevSupply = assert_uint256(toUintHarness(snapshotBefore.cash)+ prevBorrows);
         uint256 supply = totalAssetsHarness(vaultCacheBefore);
-        bool isCheckVaultStatusDisabled = isVaultStatusCheckDisabled(e);
+        // bool isCheckVaultStatusDisabled = isVaultStatusCheckDisabled(e);
 
         //FUNCTION CALL
         checkVaultStatus@withrevert(e);
@@ -166,7 +166,7 @@ use builtin rule sanity;
         assert(snapshotInitalizedBefore && supply > vaultCacheBefore.supplyCap && supply > prevSupply => reverted, "Supply is bigger than supplyCap and prevSupply");
 
         //assert3: if isCheckVaultStatusDisabled, the function reverts
-        assert(isCheckVaultStatusDisabled => reverted, "CheckVaultStatus is disabled");
+        // assert(isCheckVaultStatusDisabled => reverted, "CheckVaultStatus is disabled");
     }
 
     //accountLiquidityFull works

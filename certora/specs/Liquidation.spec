@@ -8,22 +8,12 @@ using LiquidationHarness as LiquidationHarness;
 
 // used to test running time
 use builtin rule sanity;
-// use rule privilegedOperation;
+// use rule privileg0edOperation;
 
 //invariants: lastAccountStatusCheck <= block.timestamp
 // when liquidating, the amount of debt should stay the same between the liquidator and the violator
 
 //------------------------------- RULES TEST START ----------------------------------
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -34,7 +24,7 @@ use builtin rule sanity;
 //------------------------------- RULES PROBLEMS START ----------------------------------
 
 //------------------------------- RULES OK START ------------------------------------
-//
+
 
     //only changes owed
     rule onlyChangesOwed(env e, method f, calldataarg args) filtered{

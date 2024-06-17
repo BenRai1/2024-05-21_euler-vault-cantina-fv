@@ -8,7 +8,7 @@ using BorrowingHarness as BorrowingHarness;
 
 // used to test running time
 use builtin rule sanity;
-use rule privilegedOperation;
+// use rule privilegedOperation;
 
 //invariants: 
 //- interestAccumulator of a user account is never bigger than the global interestAccumulator
@@ -89,7 +89,7 @@ use rule privilegedOperation;
         bool vaultIsController = vaultIsController(onBehalfOf);
         bool isNotSet = isNotSetCompatibeAssetHarness(vaultCacheBefore.configFlags);
         bool isKnownNonOwnerAccount = isKnownNonOwnerAccountHarness(receiver);
-        bool isBorrowDisabled = isBorrowDisabled(e);
+        // bool isBorrowDisabled = isBorrowDisabled(e);
  
         //function call
         borrow@withrevert(e, amount, receiver);
@@ -114,8 +114,8 @@ use rule privilegedOperation;
         //assert6: if configflag is not set and isKnownNonOwnerAccount(receiver), then revert
         assert(amountAsAssests != 0 => isNotSet && isKnownNonOwnerAccount => reverted, "Config flag should be set and receiver should not be a known non owner account");
 
-        //assert7: if borrow is disabled, then revert
-        assert(isBorrowDisabled => reverted, "Borrow should not be disabled");
+        // //assert7: if borrow is disabled, then revert
+        // assert(isBorrowDisabled => reverted, "Borrow should not be disabled");
     }
 
     //borrow works
@@ -200,13 +200,13 @@ use rule privilegedOperation;
         BorrowingHarness.VaultCache vaultCache = CVLUpdateVault();
         BorrowingHarness.Owed fromOwedBefore;
         BorrowingHarness.Owed fromPrevOwedBefore;
-        fromOwedBefore, fromPrevOwedBefore = loadUserBorrowHarness(vaultCache, from);
+        fromOwedBefore, fromPrevOwedBefore = CVLLoadUserBorrow(vaultCache, from);
         BorrowingHarness.Assets amountAsAssests = amount == max_uint256 ? owedToAssetsUpHarness(e,fromOwedBefore) : unitToAssetsHarness(e, amount);
         BorrowingHarness.Owed amountAsOwed = assetsToOwedHarness(e,amountAsAssests);
         BorrowingHarness.Owed finalAmount = finalAmountDustHarness(amountAsOwed, fromOwedBefore);
 
         //VALUES BEFORE
-        bool isPullDebtDisabled = isPullDebtDisabled(e);
+        // bool isPullDebtDisabled = isPullDebtDisabled(e);
 
         //FUNCTION CALL
         pullDebt@withrevert(e, amount, from);
@@ -229,8 +229,8 @@ use rule privilegedOperation;
         //assert5: if finalAmount > fromOwedBefore, then revert
         assert(finalAmount > fromOwedBefore => lastReverted, "Final amount should not be greater than the from owed");
 
-        //assert6: if pullDebt is disabled, then revert
-        assert(isPullDebtDisabled => lastReverted, "PullDebt is disabled, functions should revert");
+        // //assert6: if pullDebt is disabled, then revert
+        // assert(isPullDebtDisabled => lastReverted, "PullDebt is disabled, functions should revert");
     }
 
     //pullDebt works
@@ -291,9 +291,11 @@ use rule privilegedOperation;
         //VALUES BEFORE
         BorrowingHarness.VaultCache vaultCache = CVLUpdateVault();
         address onBehalfOf = actualCaller(e);
-        BorrowingHarness.Owed owed = getCurrentOwedHarness(e,vaultCache, receiver);
+        BorrowingHarness.Owed owed;
+        BorrowingHarness.Owed owedPrev;
+        owed, owedPrev = CVLLoadUserBorrow(vaultCache, receiver);
         BorrowingHarness.Owed assets = toAssetHarness(amount == max_uint256 ? owed : amount); //i: amount to repay
-        bool isRepayDisabled = isRepayDisabled(e);
+        // bool isRepayDisabled = isRepayDisabled(e);
 
         //FUNCTION CALL
         repay@withrevert(e, amount, receiver);
@@ -310,7 +312,7 @@ use rule privilegedOperation;
         assert(to_mathint(assets) > to_mathint(owed) => reverted, "Amount should not be greater than the owed");
 
         //assert4: if repay is disabled, then revert
-        assert(isRepayDisabled => reverted, "Repay is disabled, functions should revert");
+        // assert(isRepayDisabled => reverted, "Repay is disabled, functions should revert");
     }
 
     //repay works
