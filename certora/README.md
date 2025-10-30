@@ -12,4 +12,4 @@ The goal of the formal verification part of the competition was to formally veri
 | [RiskManager.sol](https://github.com/BenRai1/2024-05-21_euler-vault-cantina-fv/blob/master/src/EVault/modules/RiskManager.sol) | 55   |
 | [Vault.sol](https://github.com/BenRai1/2024-05-21_euler-vault-cantina-fv/blob/master/src/EVault/modules/Vault.sol)             | 158  |
 
-I wrote a total of [325 rules](https://github.com/BenRai1/silo-v2-cantina-fv/tree/main/certora/specs) and managed to catch 21 out of 27 mutations used for [evaluating the submissions](https://docs.google.com/spreadsheets/d/134AlmLXV2gbSRmsgCdK0IRU2qQtL6XhJL4uiOLayn5A/edit?gid=1970712821#gid=1970712821) which place me 2nd in the FV contest.
+The [rules I wrote](https://github.com/BenRai1/silo-v2-cantina-fv/tree/main/certora/specs) caught 21 out of 27 mutations used for [evaluating the submissions](https://docs.google.com/spreadsheets/d/134AlmLXV2gbSRmsgCdK0IRU2qQtL6XhJL4uiOLayn5A/edit?gid=1970712821#gid=1970712821) which place me 2nd in the FV contest.
